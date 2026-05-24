@@ -1,0 +1,35 @@
+{
+  "name": "pulse-news",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "lint": "eslint --ext .ts,.tsx . --ignore-path .gitignore",
+    "lint:fix": "eslint --ext .ts,.tsx . --ignore-path .gitignore --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3"
+  },
+  "lint-staged": {
+    "cron/**/*.ts": [
+      "prettier --write",
+      "bash -c 'npx tsc --noEmit --project cron/tsconfig.json'"
+    ],
+    "app/**/*.{ts,tsx}": [
+      "prettier --write",
+      "bash -c 'npx tsc --noEmit --project app/tsconfig.json'"
+    ],
+    "shared/**/*.ts": [
+      "prettier --write"
+    ],
+    "**/*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}
