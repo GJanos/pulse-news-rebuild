@@ -1,0 +1,121 @@
+import type { IncomingMessage, ServerResponse } from 'http';
+import fs from 'fs';
+import path from 'path';
+import type { PulseConfig } from '@shared/config';
+import { REGIONS } from '@shared/regions';
+
+// ── Defaults ─────────────────────────────────────────────────────────────────
+
+export const defaultConfig: PulseConfig = {
+  model: {
+    name: 'sonar',
+    reasoningEffort: 'low',
+    temperature: 0.2,
+    searchType: 'pro',
+    searchContextSize: 'medium',
+  },
+  api: {
+    regions: REGIONS.map((r) => r.region),
+    fetch: {
+      count: 5,
+      summarySentences: 1,
+      detailSentences: 3,
+      maxAttempts: 4,
+      attemptDelay: 2000,
+      retryDelay: 1000,
+      minResults: 5,
+      recencySequence: ['day', 'day', 'week', 'week', 'month', 'month'],
+      buffer: 0,
+    },
+    ranking: {
+      local: {
+        enabled: true,
+        model: 'claude-sonnet-4-6',
+        maxTokens: 256,
+      },
+      global: {
+        enabled: false,
+        count: 5,
+        model: 'claude-sonnet-4-6',
+        maxTokens: 512,
+        chunkSize: 40,
+      },
+    },
+  },
+  db: {
+    evict: true,
+    evictDays: 7,
+  },
+  log: {
+    level: 'info',
+    qualityLog: true,
+  },
+};
+
+// ── Config loading ────────────────────────────────────────────────────────────
+
+export function loadPulseConfig(configPath?: string): PulseConfig {
+  // pulse.config.json lives in shared/ (moved from cron/ in Phase 1)
+  const resolvedPath =
+    configPath ?? path.resolve(__dirname, '..', '..', 'shared', 'pulse.config.json');
+
+  const config: PulseConfig = {
+    model: { ...defaultConfig.model },
+    api: { ...defaultConfig.api },
+    db: { ...defaultConfig.db },
+    log: { ...defaultConfig.log },
+  };
+
+  if (fs.existsSync(resolvedPath)) {
+    const raw = fs.readFileSync(resolvedPath, 'utf8');
+    const parsed = (JSON.parse(raw) as { cron?: Partial<PulseConfig> }).cron ?? {};
+    const merged = mergeConfig(defaultConfig, parsed);
+    config.model = merged.model;
+    config.api = merged.api;
+    config.db = merged.db;
+    config.log = merged.log;
+  }
+
+  // TODO: Phase 4 — initializeLogger(config)
+
+  return config;
+}
+
+// ── Merge helper ──────────────────────────────────────────────────────────────
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+export function mergeConfig<T>(defaults: T, overrides: Partial<T>): T {
+  if (!isObject(defaults) || !isObject(overrides)) {
+    return (overrides as T) ?? defaults;
+  }
+
+  const merged = { ...defaults } as Record<string, unknown>;
+
+  for (const key of Object.keys(overrides) as Array<keyof T>) {
+    const keyStr = key as string;
+    const defVal = (defaults as Record<string, unknown>)[keyStr];
+    const ovVal = (overrides as Record<string, unknown>)[keyStr];
+
+    if (isObject(defVal) && isObject(ovVal)) {
+      merged[keyStr] = mergeConfig(defVal, ovVal as Partial<typeof defVal>);
+    } else if (ovVal !== undefined) {
+      merged[keyStr] = ovVal;
+    }
+  }
+
+  return merged as T;
+}
+
+// ── Vercel auth ───────────────────────────────────────────────────────────────
+
+export function checkCronSecret(req: IncomingMessage, res: ServerResponse): boolean {
+  const secret = process.env.CRON_SECRET;
+  if (secret && req.headers.authorization !== `Bearer ${secret}`) {
+    res.writeHead(401).end('Unauthorized');
+    return false;
+  }
+  return true;
+}
