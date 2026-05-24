@@ -3,7 +3,8 @@
   "compilerOptions": {
     "ignoreDeprecations": "6.0",
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "..",
+    "types": ["jest", "node"],
     "paths": {
       "@shared/*": ["../shared/src/*"]
     }
