@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import type { IncomingMessage, ServerResponse } from 'http';
 import type { PulseConfig } from '@shared/config';
 
