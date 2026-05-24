@@ -1,5 +1,6 @@
 import { REGIONS } from '@shared/regions';
 import type { Headline, UserPreferences } from '@shared/types';
+import '@shared/config'; // runtime module existence check — config.ts has no value exports
 import type { SharedConfig } from '@shared/config';
 
 describe('@shared/regions', () => {
