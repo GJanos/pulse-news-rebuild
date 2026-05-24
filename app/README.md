@@ -26,9 +26,9 @@ npm install
 
 Copy `.env.example` to `.env` inside `app/` and fill in:
 
-| Variable | Description |
-|---|---|
-| `EXPO_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| Variable                        | Description                     |
+| ------------------------------- | ------------------------------- |
+| `EXPO_PUBLIC_SUPABASE_URL`      | Supabase project URL            |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon (publishable) key |
 
 FCM config lives in `app/android/app/google-services.json`, not env vars.

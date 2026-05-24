@@ -30,7 +30,7 @@ npm run test:coverage   # Jest with coverage report
 npm run lint            # ESLint on src/
 ```
 
-Dev runners (added by cron/* slices):
+Dev runners (added by cron/\* slices):
 
 ```bash
 npm run testFetch           # fetch-only, no DB writes, prints headlines
@@ -43,14 +43,14 @@ npm run run                 # full pipeline: fetch + persist + FCM + quality log
 
 ## Environment variables
 
-| Variable | Description |
-|---|---|
-| `PERPLEXITY_API_KEY` | Perplexity Sonar API key |
-| `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_SECRET_KEY` | Service-role key (bypasses RLS) |
-| `FIREBASE_PROJECT_ID` | Firebase project ID |
-| `FIREBASE_CLIENT_EMAIL` | Firebase service account email |
-| `FIREBASE_PRIVATE_KEY` | Firebase private key (newlines as `\n` in the string) |
+| Variable                | Description                                           |
+| ----------------------- | ----------------------------------------------------- |
+| `PERPLEXITY_API_KEY`    | Perplexity Sonar API key                              |
+| `SUPABASE_URL`          | Supabase project URL                                  |
+| `SUPABASE_SECRET_KEY`   | Service-role key (bypasses RLS)                       |
+| `FIREBASE_PROJECT_ID`   | Firebase project ID                                   |
+| `FIREBASE_CLIENT_EMAIL` | Firebase service account email                        |
+| `FIREBASE_PRIVATE_KEY`  | Firebase private key (newlines as `\n` in the string) |
 
 `SUPABASE_PUBLISHABLE_KEY` is not used here — cron uses the secret key directly.
 

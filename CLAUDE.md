@@ -12,10 +12,10 @@ pulse-news/
 
 ## Build & test commands
 
-| Package | Typecheck | Lint | Test |
-|---------|-----------|------|------|
-| cron | `cd cron && npx tsc --noEmit` | `cd cron && npx eslint --ext .ts src` | `cd cron && npm test` |
-| app | `cd app && npx tsc --noEmit` | `cd app && npx eslint --ext .ts,.tsx src` | deferred to app/foundation |
+| Package | Typecheck                     | Lint                                      | Test                       |
+| ------- | ----------------------------- | ----------------------------------------- | -------------------------- |
+| cron    | `cd cron && npx tsc --noEmit` | `cd cron && npx eslint --ext .ts src`     | `cd cron && npm test`      |
+| app     | `cd app && npx tsc --noEmit`  | `cd app && npx eslint --ext .ts,.tsx src` | deferred to app/foundation |
 
 Prettier (run from root): `npm run format:check` / `npm run format`
 
@@ -63,6 +63,7 @@ Root `npm install` installs only shared devtools (Prettier, ESLint, Husky).
 ## CI
 
 GitHub Actions runs on every PR to `develop` or `main`:
+
 - format:check (root)
 - lint (root, covering all packages)
 - typecheck per package

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.vercel/
+
+# Secrets — each subfolder has its own .env, but catch any root-level accidents
+.env
+.env.local
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+
