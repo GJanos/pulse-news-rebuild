@@ -59,21 +59,12 @@ export function loadPulseConfig(configPath?: string): PulseConfig {
   const resolvedPath =
     configPath ?? path.resolve(__dirname, '..', '..', 'shared', 'pulse.config.json');
 
-  const config: PulseConfig = {
-    model: { ...defaultConfig.model },
-    api: { ...defaultConfig.api },
-    db: { ...defaultConfig.db },
-    log: { ...defaultConfig.log },
-  };
+  const config: PulseConfig = structuredClone(defaultConfig);
 
   if (fs.existsSync(resolvedPath)) {
     const raw = fs.readFileSync(resolvedPath, 'utf8');
     const parsed = (JSON.parse(raw) as { cron?: Partial<PulseConfig> }).cron ?? {};
-    const merged = mergeConfig(defaultConfig, parsed);
-    config.model = merged.model;
-    config.api = merged.api;
-    config.db = merged.db;
-    config.log = merged.log;
+    return mergeConfig(defaultConfig, parsed);
   }
 
   // TODO: Phase 4 — initializeLogger(config)
