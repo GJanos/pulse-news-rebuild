@@ -51,3 +51,40 @@ export function buildClient() {
   }
   return _db;
 }
+
+export async function persistDigests(digests: RegionDigest[], config: PulseConfig): Promise<void> {
+  const log = getLogger('notify');
+  const db = buildClient();
+  const today = new Date().toISOString().slice(0, 10);
+
+  if (config.db.evict) {
+    const { error } = await db.from('digests').delete().lt('date', cutoffDate(config.db.evictDays));
+    if (error) log.warn(`Eviction failed: ${error.message}`);
+    else log.info(`Evicted digests older than ${config.db.evictDays} days`);
+  }
+
+  const rows = digests.map((d) => ({
+    region: d.region,
+    date: today,
+    payload: { headlines: d.headlines },
+  }));
+
+  const { error } = await db.from('digests').upsert(rows, { onConflict: 'region,date' });
+  if (error) throw new Error(`Digest upsert failed: ${error.message}`);
+
+  log.info(`Persisted ${rows.length} digests for ${today}`);
+}
+
+/** Upsert today's global digest into the `global_digests` table (one row per date). */
+export async function persistGlobalDigest(headlines: GlobalHeadline[]): Promise<void> {
+  const log = getLogger('notify');
+  const db = buildClient();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { error } = await db
+    .from('global_digests')
+    .upsert({ date: today, payload: { headlines } }, { onConflict: 'date' });
+  if (error) throw new Error(`Global digest upsert failed: ${error.message}`);
+
+  log.info(`Persisted ${headlines.length} global headlines for ${today}`);
+}
