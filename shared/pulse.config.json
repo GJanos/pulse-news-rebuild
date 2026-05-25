@@ -1,0 +1,67 @@
+{
+  "app": {
+    "screenStateTtlMs": 1800000,
+    "splashAdvanceMs": 900,
+    "deviceRegistrationTimeoutMs": 10000,
+    "prefsDebounceMs": 100,
+    "logLevel": "debug",
+    "digestStaleMins": 60,
+    "currencyStaleMins": 5,
+    "fetchCount": 5
+  },
+  "cron": {
+    "model": {
+      "name": "sonar-pro",
+      "reasoningEffort": "low",
+      "temperature": 0.35,
+      "searchType": "pro",
+      "searchContextSize": "medium"
+    },
+    "api": {
+      "regions": [
+        "Hungary",
+        "Ukraine",
+        "Russia",
+        "India",
+        "United States",
+        "United Kingdom",
+        "China",
+        "Iran",
+        "Israel"
+      ],
+      "fetch": {
+        "count": 5,
+        "summarySentences": 1,
+        "detailSentences": 3,
+        "maxAttempts": 4,
+        "attemptDelay": 2000,
+        "retryDelay": 3000,
+        "minResults": 5,
+        "recencySequence": ["day", "day", "week", "week", "month", "month"],
+        "buffer": 1
+      },
+      "ranking": {
+        "local": {
+          "enabled": true,
+          "model": "claude-sonnet-4-6",
+          "maxTokens": 256
+        },
+        "global": {
+          "enabled": true,
+          "count": 5,
+          "model": "claude-sonnet-4-6",
+          "maxTokens": 512,
+          "chunkSize": 25
+        }
+      }
+    },
+    "db": {
+      "evict": false,
+      "evictDays": 14
+    },
+    "log": {
+      "level": "debug",
+      "qualityLog": true
+    }
+  }
+}

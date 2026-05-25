@@ -139,25 +139,27 @@ No `release/` branch until a beta channel exists.
 
 ### Backend slices (in order — each builds on the prior)
 
-1. **shared** — types, config schema, region/currency constants. Pure, easy, sets contracts.
-2. **cron/config** — loading + validating `pulse.config.json` from `shared/`.
-3. **cron/fetch** — news fetching, all current sources, current behavior.
-4. **cron/dedup** — headline deduplication.
-5. **cron/rank** — ranking algorithm. Highest test priority.
-6. **cron/digest** — digest assembly + Supabase persistence.
-7. **cron/notify** — push notification dispatch.
-8. **cron/api** — the `daily-digest.ts` endpoint + entry wiring.
+| #   | Slice                                                                                          | Status              | PR  |
+| --- | ---------------------------------------------------------------------------------------------- | ------------------- | --- |
+| 1   | **shared** — types, config schema, region/currency constants                                   | ✓ merged to develop | #1  |
+| 2   | **cron/config** — loading + validating `pulse.config.json` from `shared/`                      | ✓ merged to develop | #2  |
+| 3   | **cron/fetch** — news fetching, all sources, logging (`logging.ts`, `qualityLog.ts`)           | ✓ merged to develop | #3  |
+| 4   | **cron/rank** — per-region Claude reorder + cross-region global selection                      | ✓ merged to develop | #4  |
+| 5   | **cron/notify** — `persistDigests`, FCM dispatch, `sendNotifications`                          | pending             | —   |
+| 6   | **cron/api** — `daily-digest.ts` + `notify.ts` + `account.ts` Vercel handlers, pipeline wiring | pending             | —   |
 
 Currency rate fetching happens in the UI, not in cron — no `cron/currency` slice.
 
 ### Frontend slices (after backend lands on develop)
 
-1. **app/foundation** — App.tsx shell, fonts, theme, safe areas, navigation skeleton, error boundaries.
-2. **app/auth-flow** — Supabase auth + login/signup/reset screens + session hook.
-3. **app/digest-flow** — preferences + digest fetching + currency rates hook + DigestPage + DigestPager + sections. Big slice; this is the heart of the app and slicing it finer would require too many stubs.
-4. **app/settings-flow** — Settings screen + region picker + preference editing.
-5. **app/article** — ArticleScreen + WebBrowser handoff.
-6. **app/notifications** — notification registration + deep link parsing + password recovery flow.
+| #   | Slice                                                                                                           | Status  |
+| --- | --------------------------------------------------------------------------------------------------------------- | ------- |
+| 1   | **app/foundation** — App.tsx shell, fonts, theme, safe areas, navigation skeleton, error boundaries             | pending |
+| 2   | **app/auth-flow** — Supabase auth + login/signup/reset screens + session hook                                   | pending |
+| 3   | **app/digest-flow** — preferences + digest fetching + currency rates hook + DigestPage + DigestPager + sections | pending |
+| 4   | **app/settings-flow** — Settings screen + region picker + preference editing                                    | pending |
+| 5   | **app/article** — ArticleScreen + WebBrowser handoff                                                            | pending |
+| 6   | **app/notifications** — notification registration + deep link parsing + password recovery flow                  | pending |
 
 Some files (App.tsx, hooks) get touched across multiple slices. That is expected. Each slice adds the parts of those files it needs; it does not rewrite from scratch.
 
@@ -172,9 +174,10 @@ Each slice kickoff prompt explicitly scopes the legacy regions to port. Example:
 - **One slice = one PR.** No combined slices.
 - **Port behavior first, improve structure second.** Match legacy behavior exactly. Structural improvements (extracting helpers, renaming, splitting files) are allowed in the same PR. Algorithm or behavior changes are not. If you spot a better way, write it in `todo.md` and do it in a `fix/*` branch after parity.
   - Rule of thumb: if legacy and rebuild would produce different outputs on the same input, it is a behavior change and must be deferred.
-- **Tests go in the same PR.** Not "tests later." Test what hurts when it breaks — ranking, dedup, auth state, deep link parsing, digest assembly. Skip snapshot tests on pure presentation. Aim 60–70% coverage on the right lines.
-- **`/code-review` before opening the PR**, not after. Fix findings on the branch.
-- **`/security-review`** on slices that touch auth, notifications, API endpoints, or deep links. Skip on pure-logic slices.
+- **Skill-driven quality improvements are allowed in the same PR.** The installed skills (`typescript-pro`, `react-expert`, `react-native-expert`, `test-master`, `security-reviewer`) are authoritative on code quality within each slice. They may: strengthen types, apply idiomatic patterns, improve test architecture, and harden security posture. The hard constraint remains: same inputs → same outputs. Any improvement that changes observable behavior must go to `todo.md`.
+- **Tests go in the same PR.** Not "tests later." Test what hurts when it breaks — ranking, dedup, auth state, deep link parsing, digest assembly. Skip snapshot tests on pure presentation. Aim 60–70% coverage on the right lines. Invoke `test-master` on each test file before committing.
+- **`/code-review` before opening the PR**, not after. Fix findings on the branch. Invoke `code-reviewer` skill for a deeper pass on logic-heavy slices.
+- **`/security-review`** on slices that touch auth, notifications, API endpoints, or deep links. Invoke `security-reviewer` skill alongside it. Skip both on pure-logic slices.
 - **PR description links the legacy file(s) it replaces.** Enables completeness audit.
 
 ---

@@ -19,28 +19,32 @@ npm run test:coverage         # Jest + coverage
 npx eslint --ext .ts src      # lint
 ```
 
-## Module map (populated by slices)
+## Module map
 
-| File                          | Role                                                                                                 |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `src/types.ts`                | Core types — `RegionHeadline`, `RegionDigest`, `DigestSource`, `DigestUsage`                         |
-| `src/config.ts`               | Loads + merges `pulse.config.json` with defaults; env overrides; `createSource()`; `checkCronSecret` |
-| `src/pipeline.ts`             | `runFetchPipeline` (staggered `Promise.allSettled`); run log helpers                                 |
-| `src/fetchNews.ts`            | `PerplexitySource` — implements `DigestSource`; retry loop; URL resolution and filtering             |
-| `src/rankHeadlines.ts`        | Per-region Claude reorder + cross-region global selection                                            |
-| `src/notify.ts`               | `persistDigests`, `persistGlobalDigest`, `dispatchFcm`, `sendNotifications`                          |
-| `src/prompt.ts`               | All prompt builders for fetch, ranking, and global selection                                         |
-| `src/regions.ts`              | `resolveRegions()` (re-exports `ALL_REGIONS` from `@shared/regions`)                                 |
-| `src/logging.ts`              | Winston logger factory                                                                               |
-| `src/bootstrap.ts`            | dotenv loader — must be imported first by all runners                                                |
-| `src/lib/perplexityClient.ts` | HTTP client with iterative retry                                                                     |
-| `src/lib/parseHeadlines.ts`   | URL resolution + quality annotation                                                                  |
-| `src/lib/urlUtils.ts`         | Article URL validation and slug extraction                                                           |
-| `src/lib/topicUtils.ts`       | Jaccard deduplication, topic spread                                                                  |
-| `src/lib/textUtils.ts`        | `stripCitations`, `summaryHasUrl`                                                                    |
-| `api/daily-digest.ts`         | Vercel handler — fetch + persist + global rank + FCM (null-notify_at devices)                        |
-| `api/notify.ts`               | Vercel handler — FCM to devices in the current 30-minute window                                      |
-| `api/account.ts`              | Vercel handler — device registration and account deletion                                            |
+Files marked ✓ are landed on `develop`. Unmarked are planned but not yet ported.
+
+| File                          | ✓   | Role                                                                                                 |
+| ----------------------------- | --- | ---------------------------------------------------------------------------------------------------- |
+| `src/types.ts`                | ✓   | Core types — `RegionHeadline`, `RegionDigest`, `DigestSource`, `DigestUsage`, quality types          |
+| `src/config.ts`               | ✓   | Loads + merges `pulse.config.json` with defaults; env overrides; `createSource()`; `checkCronSecret` |
+| `src/logging.ts`              | ✓   | Winston logger factory — `initializeLogger`, `getLogger`                                             |
+| `src/qualityLog.ts`           | ✓   | `RunConfig`, `RunLog` types; `buildLogPath`, `appendRunLog`                                          |
+| `src/prompt.ts`               | ✓   | All 6 prompt builders for fetch, ranking, and global selection                                       |
+| `src/fetchNews.ts`            | ✓   | `PerplexitySource` — implements `DigestSource`; retry loop; URL resolution and filtering             |
+| `src/lib/perplexityClient.ts` | ✓   | HTTP client with 429/5xx retry                                                                       |
+| `src/lib/parseHeadlines.ts`   | ✓   | URL resolution + quality annotation                                                                  |
+| `src/lib/urlUtils.ts`         | ✓   | Article URL validation and slug extraction                                                           |
+| `src/lib/topicUtils.ts`       | ✓   | Jaccard deduplication, topic spread                                                                  |
+| `src/lib/textUtils.ts`        | ✓   | `stripCitations`, `summaryHasUrl`                                                                    |
+| `src/index.ts`                | ✓   | Entry point (stub — wired up in cron/api slice)                                                      |
+| `src/rankHeadlines.ts`        | ✓   | Per-region Claude reorder + cross-region global selection (cron/rank slice)                          |
+| `src/pipeline.ts`             |     | `runFetchPipeline` — staggered `Promise.allSettled` orchestration (cron/api slice)                   |
+| `src/regions.ts`              |     | `resolveRegions()` — re-exports `ALL_REGIONS` from `@shared/regions` (cron/api slice)                |
+| `src/notify.ts`               |     | `persistDigests`, `persistGlobalDigest`, `dispatchFcm`, `sendNotifications` (cron/notify slice)      |
+| `src/bootstrap.ts`            |     | dotenv loader — must be imported first by all runners (cron/api slice)                               |
+| `api/daily-digest.ts`         |     | Vercel handler — fetch + persist + global rank + FCM (cron/api slice)                                |
+| `api/notify.ts`               |     | Vercel handler — FCM to devices in the current 30-minute window (cron/notify slice)                  |
+| `api/account.ts`              |     | Vercel handler — device registration and account deletion (cron/api slice)                           |
 
 ## Environment variables
 
