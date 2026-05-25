@@ -12,7 +12,7 @@ import { getLogger } from './logging';
 
 // Lazily initialized after dotenv runs — avoids re-instantiation per region call.
 let _client: Anthropic | null = null;
-export function getClient(): Anthropic | null {
+function getClient(): Anthropic | null {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return null;
   if (!_client) _client = new Anthropic({ apiKey });
@@ -20,10 +20,10 @@ export function getClient(): Anthropic | null {
 }
 
 // Sonnet pricing as of 2026 — update here if Anthropic changes rates.
-export const COST_PER_INPUT_TOKEN = 3.0 / 1_000_000;
-export const COST_PER_OUTPUT_TOKEN = 15.0 / 1_000_000;
+const COST_PER_INPUT_TOKEN = 3.0 / 1_000_000;
+const COST_PER_OUTPUT_TOKEN = 15.0 / 1_000_000;
 
-export const RANKING_TOOL: Anthropic.Tool = {
+const RANKING_TOOL: Anthropic.Tool = {
   name: 'submit_ranking',
   description: 'Submit the ranked order of headlines, most important first.',
   input_schema: {
@@ -40,7 +40,7 @@ export const RANKING_TOOL: Anthropic.Tool = {
   },
 };
 
-export const GLOBAL_TOOL: Anthropic.Tool = {
+const GLOBAL_TOOL: Anthropic.Tool = {
   name: 'submit_global_selection',
   description: 'Submit the indices of the most globally important headlines, most important first.',
   input_schema: {
