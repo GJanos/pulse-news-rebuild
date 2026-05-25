@@ -30,13 +30,14 @@ npm run test:coverage   # Jest with coverage report
 npm run lint            # ESLint on src/
 ```
 
-Dev runners (added by cron/\* slices):
+E2E runners (call real APIs — require `.env` to be populated):
 
 ```bash
-npm run testFetch           # fetch-only, no DB writes, prints headlines
-npm run testNotify          # send FCM push to every registered device
-npm run testGlobalRanking   # re-run global ranking on today's Supabase digests
-npm run run                 # full pipeline: fetch + persist + FCM + quality log
+npm run e2e:fetch                           # fetch + rank, no DB writes
+npm run e2e:full                            # full pipeline: fetch → persist → FCM → quality log
+npm run e2e:notify                          # FCM push to all registered devices
+npm run e2e:globalRanking                   # re-rank today's Supabase digests globally
+npm run e2e:countryRanking -- US GB DE      # per-region rank on selected regions
 ```
 
 ---

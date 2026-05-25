@@ -7,7 +7,12 @@
     "lint": "eslint --ext .ts src",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "e2e:fetch": "ts-node -r tsconfig-paths/register e2e/fetch.ts",
+    "e2e:full": "ts-node -r tsconfig-paths/register e2e/full.ts",
+    "e2e:notify": "ts-node -r tsconfig-paths/register e2e/notify.ts",
+    "e2e:globalRanking": "ts-node -r tsconfig-paths/register e2e/globalRanking.ts",
+    "e2e:countryRanking": "ts-node -r tsconfig-paths/register e2e/countryRanking.ts"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -16,6 +21,7 @@
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.3"
   },
   "dependencies": {

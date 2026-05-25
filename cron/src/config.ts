@@ -5,7 +5,7 @@ import type { PulseConfig } from '@shared/config';
 import type { DigestSource } from './types';
 import { REGIONS } from '@shared/regions';
 import { PerplexitySource } from './fetchNews';
-import { getLogger } from './logging';
+import { configureLogger, getLogger } from './logging';
 
 // ── Defaults ─────────────────────────────────────────────────────────────────
 
@@ -67,11 +67,12 @@ export function loadPulseConfig(configPath?: string): PulseConfig {
   if (fs.existsSync(resolvedPath)) {
     const raw = fs.readFileSync(resolvedPath, 'utf8');
     const parsed = (JSON.parse(raw) as { cron?: Partial<PulseConfig> }).cron ?? {};
-    return mergeConfig(defaultConfig, parsed);
+    const merged = mergeConfig(defaultConfig, parsed);
+    configureLogger(merged);
+    return merged;
   }
 
-  // TODO: Phase 4 — initializeLogger(config)
-
+  configureLogger(config);
   return config;
 }
 

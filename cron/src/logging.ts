@@ -7,21 +7,16 @@ const customFormat = printf((info) => {
   return `${info['timestamp']} ${info.level} (${info['component']}) ${info.message}`;
 });
 
-let logger: winston.Logger;
+const logger = winston.createLogger({
+  level: 'info',
+  format: combine(timestamp(), colorize(), customFormat),
+  transports: [new winston.transports.Console()],
+});
 
-export function initializeLogger(config: PulseConfig): void {
-  const level = config.log.level;
-
-  logger = winston.createLogger({
-    level,
-    format: combine(timestamp(), colorize(), customFormat),
-    transports: [new winston.transports.Console()],
-  });
+export function configureLogger(config: PulseConfig): void {
+  logger.level = config.log.level;
 }
 
 export function getLogger(component: string): winston.Logger {
-  if (!logger) {
-    throw new Error('Logger not initialized. Call initializeLogger first.');
-  }
   return logger.child({ component });
 }
