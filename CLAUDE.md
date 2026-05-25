@@ -76,6 +76,33 @@ The following Claude Code skills are installed and should be invoked when their 
 
 During porting slices, these skills are authoritative on code quality within behavioral constraints — see REBUILD_PLAN.md §8.
 
+**Rule: always invoke the relevant skill via the `Skill` tool before writing code in its domain.** Knowing the patterns is not a substitute — skills may have evolved and must be read fresh. If multiple domains are involved (e.g. TypeScript + tests), invoke both before starting.
+
+---
+
+## Post-merge branch cleanup
+
+After any PR is merged, immediately run:
+
+```bash
+git checkout develop
+git pull origin develop
+git branch -d feat/<branch-name>
+git push origin --delete feat/<branch-name>
+```
+
+Also clean up any other stale merged `feat/*` branches at the same time. Do this without being asked.
+
+---
+
+## Context-mode
+
+Use `ctx_execute` / `ctx_execute_file` / `ctx_batch_execute` (context-mode MCP tools) instead of Bash for any command that reads, queries, lists, diffs, tests, builds, or inspects output.
+
+Bash is only for: file mutations (`mkdir`, `mv`, `cp`, `rm`), git writes (`add`, `commit`, `push`, `checkout`, `branch`, `merge`), navigation (`cd`, `pwd`), process control, package install, and `echo`.
+
+When uncertain → use context-mode. Every KB of unnecessary output reduces session quality.
+
 ---
 
 ## CI
