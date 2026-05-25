@@ -1,0 +1,182 @@
+import { persistDigests, persistGlobalDigest } from '../notify';
+import type { RegionDigest } from '../types';
+import type { PulseConfig } from '@shared/config';
+
+jest.mock('../logging', () => ({
+  getLogger: () => ({ info: jest.fn(), warn: jest.fn(), debug: jest.fn() }),
+}));
+
+// ── Supabase mock ──────────────────────────────────────────────────────────────
+// Models the fluent query builder: from().delete().lt() or from().upsert() etc.
+const mockSupabase = {
+  from: jest.fn().mockReturnThis(),
+  delete: jest.fn().mockReturnThis(),
+  lt: jest.fn().mockResolvedValue({ error: null }),
+  upsert: jest.fn().mockResolvedValue({ error: null }),
+  select: jest.fn().mockResolvedValue({ data: [], error: null }),
+  in: jest.fn().mockResolvedValue({ error: null }),
+};
+
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => mockSupabase),
+}));
+
+// ── Firebase Admin mock ────────────────────────────────────────────────────────
+const mockSendEachForMulticast = jest.fn();
+jest.mock('firebase-admin', () => ({
+  __esModule: true,
+  default: {
+    apps: [],
+    initializeApp: jest.fn(),
+    credential: { cert: jest.fn() },
+    messaging: jest.fn(() => ({ sendEachForMulticast: mockSendEachForMulticast })),
+  },
+}));
+
+// ws has no runtime behaviour in tests — just needs to import without error.
+jest.mock('ws', () => ({}));
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+const makeConfig = (evict = false): PulseConfig => ({
+  model: {
+    name: 'sonar-pro',
+    reasoningEffort: 'low',
+    temperature: 0.35,
+    searchType: 'pro',
+    searchContextSize: 'medium',
+  },
+  api: {
+    regions: ['Hungary'],
+    fetch: {
+      count: 5,
+      summarySentences: 1,
+      detailSentences: 3,
+      maxAttempts: 4,
+      attemptDelay: 2000,
+      retryDelay: 3000,
+      minResults: 5,
+      recencySequence: ['day'],
+      buffer: 1,
+    },
+    ranking: {
+      local: { enabled: true, model: 'claude-sonnet-4-6', maxTokens: 256 },
+      global: {
+        enabled: true,
+        count: 5,
+        model: 'claude-sonnet-4-6',
+        maxTokens: 512,
+        chunkSize: 25,
+      },
+    },
+  },
+  db: { evict, evictDays: 14 },
+  log: { level: 'debug', qualityLog: true },
+});
+
+const makeDigests = (regions: string[]): RegionDigest[] =>
+  regions.map((region) => ({
+    region,
+    headlines: [{ title: `${region} headline`, summary: 'summary', url: 'https://example.com/1' }],
+    attempts: 1,
+  }));
+
+// ── persistDigests ─────────────────────────────────────────────────────────────
+
+describe('persistDigests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Reset fluent chain returns
+    mockSupabase.from.mockReturnThis();
+    mockSupabase.delete.mockReturnThis();
+    mockSupabase.lt.mockResolvedValue({ error: null });
+    mockSupabase.upsert.mockResolvedValue({ error: null });
+    // Provide env vars so buildClient() succeeds
+    process.env.SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SECRET_KEY = 'test-key';
+  });
+
+  it('upserts one row per digest into the digests table', async () => {
+    const digests = makeDigests(['Hungary', 'United States']);
+    await persistDigests(digests, makeConfig());
+
+    expect(mockSupabase.from).toHaveBeenCalledWith('digests');
+    expect(mockSupabase.upsert).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ region: 'Hungary' }),
+        expect.objectContaining({ region: 'United States' }),
+      ]),
+      { onConflict: 'region,date' },
+    );
+  });
+
+  it("includes today's date and headlines payload in each row", async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const digests = makeDigests(['Hungary']);
+    await persistDigests(digests, makeConfig());
+
+    const [rows] = mockSupabase.upsert.mock.calls[0] as [
+      Array<{ region: string; date: string; payload: { headlines: unknown[] } }>,
+      unknown,
+    ];
+    expect(rows[0]!.date).toBe(today);
+    expect(rows[0]!.payload.headlines).toHaveLength(1);
+  });
+
+  it('throws when upsert returns an error', async () => {
+    mockSupabase.upsert.mockResolvedValueOnce({ error: { message: 'db error' } });
+    await expect(persistDigests(makeDigests(['Hungary']), makeConfig())).rejects.toThrow(
+      'Digest upsert failed: db error',
+    );
+  });
+
+  it('runs eviction delete when evict is enabled', async () => {
+    await persistDigests(makeDigests(['Hungary']), makeConfig(true));
+    expect(mockSupabase.delete).toHaveBeenCalled();
+    expect(mockSupabase.lt).toHaveBeenCalledWith('date', expect.any(String));
+  });
+
+  it('skips eviction when evict is false', async () => {
+    await persistDigests(makeDigests(['Hungary']), makeConfig(false));
+    expect(mockSupabase.delete).not.toHaveBeenCalled();
+  });
+});
+
+// ── persistGlobalDigest ────────────────────────────────────────────────────────
+
+describe('persistGlobalDigest', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSupabase.from.mockReturnThis();
+    mockSupabase.upsert.mockResolvedValue({ error: null });
+    process.env.SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SECRET_KEY = 'test-key';
+  });
+
+  it("upserts into global_digests with today's date and all headlines", async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const headlines = [
+      {
+        title: 'Global story',
+        summary: 'summary',
+        url: 'https://example.com/1',
+        region: 'Hungary',
+      },
+    ];
+
+    await persistGlobalDigest(headlines);
+
+    expect(mockSupabase.from).toHaveBeenCalledWith('global_digests');
+    expect(mockSupabase.upsert).toHaveBeenCalledWith(
+      { date: today, payload: { headlines } },
+      { onConflict: 'date' },
+    );
+  });
+
+  it('throws when upsert returns an error', async () => {
+    mockSupabase.upsert.mockResolvedValueOnce({ error: { message: 'global db error' } });
+    await expect(persistGlobalDigest([])).rejects.toThrow(
+      'Global digest upsert failed: global db error',
+    );
+  });
+});
