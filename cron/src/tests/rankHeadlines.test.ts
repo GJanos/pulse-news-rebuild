@@ -1,4 +1,4 @@
-import { rankHeadlines } from '../rankHeadlines';
+import { rankHeadlines, rankGlobalHeadlines } from '../rankHeadlines';
 import type { RegionHeadline } from '../types';
 import type { PulseConfig } from '@shared/config';
 
@@ -166,5 +166,108 @@ describe('rankHeadlines', () => {
     const result = await rankHeadlines(headlines, 'Hungary', makeConfig());
     expect(result.headlines).toEqual(headlines);
     expect(result.usage).toBeNull();
+  });
+});
+
+function makeGlobalResponse(indices: number[]) {
+  return {
+    content: [
+      { type: 'tool_use', id: 'tu_2', name: 'submit_global_selection', input: { indices } },
+    ],
+    usage: { input_tokens: 200, output_tokens: 30 },
+  };
+}
+
+const makeDigests = (regions: string[], headlinesPerRegion: number) =>
+  regions.map((region) => ({
+    region,
+    headlines: Array.from({ length: headlinesPerRegion }, (_, i) => ({
+      title: `${region} headline ${i + 1}`,
+      summary: `${region} summary ${i + 1}`,
+      url: `https://example.com/${region}/${i + 1}`,
+    })),
+    attempts: 1,
+  }));
+
+describe('rankGlobalHeadlines', () => {
+  const OLD_ENV = process.env;
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = { ...OLD_ENV, ANTHROPIC_API_KEY: 'test-key' };
+    mockCreate.mockReset();
+  });
+  afterAll(() => {
+    process.env = OLD_ENV;
+  });
+
+  it('returns empty array when global ranking is disabled', async () => {
+    const config = makeConfig();
+    config.api.ranking.global.enabled = false;
+    const digests = makeDigests(['Hungary', 'United States'], 3);
+
+    const result = await rankGlobalHeadlines(digests, config);
+    expect(result).toEqual([]);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('returns empty array when all digests have no headlines', async () => {
+    const config = makeConfig();
+    const digests = makeDigests(['Hungary'], 0);
+
+    const result = await rankGlobalHeadlines(digests, config);
+    expect(result).toEqual([]);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('returns empty array when ANTHROPIC_API_KEY is not set', async () => {
+    process.env = { ...OLD_ENV };
+    delete process.env['ANTHROPIC_API_KEY'];
+    const config = makeConfig();
+    const digests = makeDigests(['Hungary', 'United States'], 2);
+
+    const result = await rankGlobalHeadlines(digests, config);
+    expect(result).toEqual([]);
+  });
+
+  it('selects globally important headlines in a single pass when candidates ≤ chunkSize', async () => {
+    const config = makeConfig();
+    // 2 regions × 2 headlines = 4 candidates, chunkSize=25 → single pass
+    const digests = makeDigests(['Hungary', 'United States'], 2);
+    config.api.ranking.global.count = 2;
+
+    mockCreate.mockResolvedValueOnce(makeGlobalResponse([1, 3]));
+
+    const result = await rankGlobalHeadlines(digests, config);
+    expect(result).toHaveLength(2);
+    expect(result[0]!.region).toBe('Hungary'); // candidate 1 is Hungary headline 1
+    expect(result[1]!.region).toBe('United States'); // candidate 3 is US headline 1
+  });
+
+  it('runs two rounds when candidates exceed chunkSize', async () => {
+    const config = makeConfig();
+    config.api.ranking.global.chunkSize = 3; // force chunking with 4 candidates
+    config.api.ranking.global.count = 2;
+    const digests = makeDigests(['Hungary', 'United States'], 2); // 4 candidates
+
+    // Round 1: survivorsPerChunk = max(3, min(2, 1)) = 3
+    // Chunk 0: 3 candidates, request 3 survivors → return [1, 2, 3]
+    // Chunk 1: 1 candidate, request 1 survivor → return [1]
+    mockCreate.mockResolvedValueOnce(makeGlobalResponse([1, 2, 3])); // chunk 0 all 3 survivors
+    mockCreate.mockResolvedValueOnce(makeGlobalResponse([1])); // chunk 1 its 1 survivor
+    // Round 2: final selection from 4 survivors → return top 2
+    mockCreate.mockResolvedValueOnce(makeGlobalResponse([1, 2]));
+
+    const result = await rankGlobalHeadlines(digests, config);
+    expect(result).toHaveLength(2);
+    expect(mockCreate).toHaveBeenCalledTimes(3); // 2 chunk passes + 1 final pass
+  });
+
+  it('returns empty array and does not throw when the SDK throws', async () => {
+    const config = makeConfig();
+    const digests = makeDigests(['Hungary'], 2);
+    mockCreate.mockRejectedValueOnce(new Error('rate limit'));
+
+    const result = await rankGlobalHeadlines(digests, config);
+    expect(result).toEqual([]);
   });
 });
