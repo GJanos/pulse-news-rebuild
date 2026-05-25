@@ -2,7 +2,10 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import fs from 'fs';
 import path from 'path';
 import type { PulseConfig } from '@shared/config';
+import type { DigestSource } from './types';
 import { REGIONS } from '@shared/regions';
+import { PerplexitySource } from './fetchNews';
+import { getLogger } from './logging';
 
 // ── Defaults ─────────────────────────────────────────────────────────────────
 
@@ -98,6 +101,14 @@ export function mergeConfig<T>(defaults: T, overrides: Partial<T>): T {
   }
 
   return merged as T;
+}
+
+// ── Source factory ────────────────────────────────────────────────────────────
+
+export function createSource(config: PulseConfig): DigestSource {
+  const logger = getLogger('config');
+  logger.debug(`initializing source for ${config.api.regions.length} regions`);
+  return new PerplexitySource(config);
 }
 
 // ── Vercel auth ───────────────────────────────────────────────────────────────
