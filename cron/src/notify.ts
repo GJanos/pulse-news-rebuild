@@ -1,5 +1,6 @@
 import admin from 'firebase-admin';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { WebSocketLikeConstructor } from '@supabase/realtime-js';
 import ws from 'ws';
 import type { PulseConfig } from '@shared/config';
 import type { RegionDigest } from './types';
@@ -47,7 +48,9 @@ export function buildClient() {
     const url = process.env.SUPABASE_URL;
     const key = process.env.SUPABASE_SECRET_KEY;
     if (!url || !key) throw new Error('SUPABASE_URL and SUPABASE_SECRET_KEY are required');
-    _db = createClient(url, key, { realtime: { transport: ws as any } });
+    _db = createClient(url, key, {
+      realtime: { transport: ws as unknown as WebSocketLikeConstructor },
+    });
   }
   return _db;
 }
@@ -87,4 +90,78 @@ export async function persistGlobalDigest(headlines: GlobalHeadline[]): Promise<
   if (error) throw new Error(`Global digest upsert failed: ${error.message}`);
 
   log.info(`Persisted ${headlines.length} global headlines for ${today}`);
+}
+
+/**
+ * Send FCM multicast to the given tokens and evict stale ones from the DB.
+ * Accepts an optional comma-separated region list passed as notification data.
+ */
+export async function dispatchFcm(
+  tokens: string[],
+  regions = '',
+): Promise<{ sent: number; total: number }> {
+  const log = getLogger('notify');
+  if (tokens.length === 0) return { sent: 0, total: 0 };
+
+  const messaging = initMessaging();
+  const db = buildClient();
+  const data: Record<string, string> = { type: 'daily_digest' };
+  if (regions) data['regions'] = regions;
+
+  let totalSent = 0;
+  const staleTokens: string[] = [];
+  const batches = chunkTokens(tokens);
+
+  for (let index = 0; index < batches.length; index += 1) {
+    const batchTokens = batches[index]!;
+    const result = await messaging.sendEachForMulticast({
+      tokens: batchTokens,
+      notification: { title: 'Pulse', body: 'Your daily digest is ready' },
+      data,
+      android: {
+        priority: 'high',
+        notification: { channelId: 'default' },
+      },
+    });
+
+    totalSent += result.successCount;
+    log.info(
+      `FCM batch ${index + 1}/${batches.length} sent ${result.successCount}/${batchTokens.length}`,
+    );
+
+    batchTokens.forEach((token, tokenIndex) => {
+      const code = result.responses[tokenIndex]!.error?.code;
+      if (
+        code === 'messaging/registration-token-not-registered' ||
+        code === 'messaging/invalid-registration-token'
+      ) {
+        staleTokens.push(token);
+      }
+    });
+  }
+
+  if (staleTokens.length > 0) {
+    const { error } = await db.from('devices').delete().in('fcm_token', staleTokens);
+    if (error) log.warn(`Failed to remove stale tokens: ${error.message}`);
+    else log.info(`Removed ${staleTokens.length} stale tokens`);
+  }
+
+  return { sent: totalSent, total: tokens.length };
+}
+
+/** Send notifications to all registered devices. Used by the local cron runner for testing. */
+export async function sendNotifications(digests: RegionDigest[]): Promise<void> {
+  const log = getLogger('notify');
+  const db = buildClient();
+
+  const { data: devices, error } = await db.from('devices').select('id, fcm_token');
+  if (error) throw new Error(`Failed to read device tokens: ${error.message}`);
+  if (!devices || devices.length === 0) {
+    log.info('No registered devices — skipping FCM dispatch');
+    return;
+  }
+
+  const tokens = devices.map((d) => d.fcm_token as string);
+  const regions = digests.map((d) => d.region).join(',');
+  await dispatchFcm(tokens, regions);
 }
