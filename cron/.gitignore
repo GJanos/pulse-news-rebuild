@@ -1,0 +1,13 @@
+# Secrets
+.env
+.env.local
+
+# Build output and dependencies
+node_modules/
+dist/
+
+# Quality run logs (local analysis only)
+logs/
+
+# Jest coverage output
+coverage/
