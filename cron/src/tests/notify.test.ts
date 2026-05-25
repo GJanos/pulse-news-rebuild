@@ -1,4 +1,4 @@
-import { persistDigests, persistGlobalDigest } from '../notify';
+import { persistDigests, persistGlobalDigest, dispatchFcm } from '../notify';
 import type { RegionDigest } from '../types';
 import type { PulseConfig } from '@shared/config';
 
@@ -178,5 +178,108 @@ describe('persistGlobalDigest', () => {
     await expect(persistGlobalDigest([])).rejects.toThrow(
       'Global digest upsert failed: global db error',
     );
+  });
+});
+
+// ── dispatchFcm ────────────────────────────────────────────────────────────────
+
+describe('dispatchFcm', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSupabase.from.mockReturnThis();
+    mockSupabase.in.mockResolvedValue({ error: null });
+    process.env.SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SECRET_KEY = 'test-key';
+    process.env.FIREBASE_PROJECT_ID = 'test-project';
+    process.env.FIREBASE_CLIENT_EMAIL = 'test@test.iam.gserviceaccount.com';
+    process.env.FIREBASE_PRIVATE_KEY =
+      '-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----';
+  });
+
+  it('returns { sent: 0, total: 0 } immediately when tokens list is empty', async () => {
+    const result = await dispatchFcm([]);
+    expect(result).toEqual({ sent: 0, total: 0 });
+    expect(mockSendEachForMulticast).not.toHaveBeenCalled();
+  });
+
+  it('calls sendEachForMulticast with tokens, notification body, and data', async () => {
+    mockSendEachForMulticast.mockResolvedValueOnce({
+      successCount: 2,
+      responses: [{ error: null }, { error: null }],
+    });
+
+    const result = await dispatchFcm(['token-a', 'token-b'], 'Hungary,United States');
+
+    expect(mockSendEachForMulticast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tokens: ['token-a', 'token-b'],
+        notification: { title: 'Pulse', body: 'Your daily digest is ready' },
+        data: { type: 'daily_digest', regions: 'Hungary,United States' },
+        android: { priority: 'high', notification: { channelId: 'default' } },
+      }),
+    );
+    expect(result).toEqual({ sent: 2, total: 2 });
+  });
+
+  it('does not include regions key in data when regions param is empty', async () => {
+    mockSendEachForMulticast.mockResolvedValueOnce({
+      successCount: 1,
+      responses: [{ error: null }],
+    });
+
+    await dispatchFcm(['token-a']);
+
+    const call = mockSendEachForMulticast.mock.calls[0]![0] as { data: Record<string, string> };
+    expect(call.data).not.toHaveProperty('regions');
+    expect(call.data['type']).toBe('daily_digest');
+  });
+
+  it('evicts stale tokens from DB after send', async () => {
+    mockSendEachForMulticast.mockResolvedValueOnce({
+      successCount: 1,
+      responses: [
+        { error: null },
+        { error: { code: 'messaging/registration-token-not-registered' } },
+      ],
+    });
+
+    await dispatchFcm(['token-good', 'token-stale']);
+
+    expect(mockSupabase.from).toHaveBeenCalledWith('devices');
+    expect(mockSupabase.in).toHaveBeenCalledWith('fcm_token', ['token-stale']);
+  });
+
+  it('evicts tokens with messaging/invalid-registration-token too', async () => {
+    mockSendEachForMulticast.mockResolvedValueOnce({
+      successCount: 1,
+      responses: [{ error: { code: 'messaging/invalid-registration-token' } }, { error: null }],
+    });
+
+    await dispatchFcm(['token-invalid', 'token-good']);
+
+    expect(mockSupabase.in).toHaveBeenCalledWith('fcm_token', ['token-invalid']);
+  });
+
+  it('skips DB eviction when no stale tokens', async () => {
+    mockSendEachForMulticast.mockResolvedValueOnce({
+      successCount: 2,
+      responses: [{ error: null }, { error: null }],
+    });
+
+    await dispatchFcm(['token-a', 'token-b']);
+
+    expect(mockSupabase.in).not.toHaveBeenCalled();
+  });
+
+  it('splits into multiple batches when tokens exceed FCM_BATCH_SIZE (500)', async () => {
+    const tokens = Array.from({ length: 501 }, (_, i) => `token-${i}`);
+    mockSendEachForMulticast
+      .mockResolvedValueOnce({ successCount: 500, responses: Array(500).fill({ error: null }) })
+      .mockResolvedValueOnce({ successCount: 1, responses: [{ error: null }] });
+
+    const result = await dispatchFcm(tokens);
+
+    expect(mockSendEachForMulticast).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ sent: 501, total: 501 });
   });
 });
