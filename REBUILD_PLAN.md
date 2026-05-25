@@ -144,11 +144,9 @@ No `release/` branch until a beta channel exists.
 | 1   | **shared** — types, config schema, region/currency constants                                   | ✓ merged to develop | #1  |
 | 2   | **cron/config** — loading + validating `pulse.config.json` from `shared/`                      | ✓ merged to develop | #2  |
 | 3   | **cron/fetch** — news fetching, all sources, logging (`logging.ts`, `qualityLog.ts`)           | ✓ merged to develop | #3  |
-| 4   | **cron/rank** — per-region Claude reorder + cross-region global selection                      | pending             | —   |
+| 4   | **cron/rank** — per-region Claude reorder + cross-region global selection                      | ✓ merged to develop | #4  |
 | 5   | **cron/notify** — `persistDigests`, FCM dispatch, `sendNotifications`                          | pending             | —   |
 | 6   | **cron/api** — `daily-digest.ts` + `notify.ts` + `account.ts` Vercel handlers, pipeline wiring | pending             | —   |
-
-> Note: `rankHeadlines` is stubbed as `slice(0, count)` in `fetchNews.ts` — replaced in cron/rank slice.
 
 Currency rate fetching happens in the UI, not in cron — no `cron/currency` slice.
 
