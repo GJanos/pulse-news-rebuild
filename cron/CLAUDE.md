@@ -40,7 +40,7 @@ Files marked ✓ are landed on `develop`. Unmarked are planned but not yet porte
 | `src/rankHeadlines.ts`        | ✓   | Per-region Claude reorder + cross-region global selection (cron/rank slice)                          |
 | `src/pipeline.ts`             |     | `runFetchPipeline` — staggered `Promise.allSettled` orchestration (cron/api slice)                   |
 | `src/regions.ts`              |     | `resolveRegions()` — re-exports `ALL_REGIONS` from `@shared/regions` (cron/api slice)                |
-| `src/notify.ts`               |     | `persistDigests`, `persistGlobalDigest`, `dispatchFcm`, `sendNotifications` (cron/notify slice)      |
+| `src/notify.ts`               | ✓   | `persistDigests`, `persistGlobalDigest`, `dispatchFcm`, `sendNotifications` (cron/notify slice)      |
 | `src/bootstrap.ts`            |     | dotenv loader — must be imported first by all runners (cron/api slice)                               |
 | `api/daily-digest.ts`         |     | Vercel handler — fetch + persist + global rank + FCM (cron/api slice)                                |
 | `api/notify.ts`               |     | Vercel handler — FCM to devices in the current 30-minute window (cron/notify slice)                  |
