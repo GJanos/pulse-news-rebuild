@@ -60,6 +60,24 @@ import { REGIONS } from '@shared/regions';
 Run `npm install` inside each package directory independently.
 Root `npm install` installs only shared devtools (Prettier, ESLint, Husky).
 
+## Available skills
+
+The following Claude Code skills are installed and should be invoked when their domain is relevant:
+
+| Skill                 | Invoke when                                                                    |
+| --------------------- | ------------------------------------------------------------------------------ |
+| `typescript-pro`      | Typing, generics, branded types, tsconfig, discriminated unions                |
+| `react-expert`        | React 18+ components, hooks, Suspense, Server Components                       |
+| `react-native-expert` | Expo/RN navigation, native modules, FlatList perf, SafeArea, platform code     |
+| `test-master`         | Writing or reviewing tests, coverage gaps, mocking strategy, test architecture |
+| `security-reviewer`   | Slices touching auth, API endpoints, notifications, deep links                 |
+| `debugging-wizard`    | Investigating errors, stack traces, unexpected behavior                        |
+| `code-reviewer`       | Pre-PR quality pass (complements `/code-review`)                               |
+
+During porting slices, these skills are authoritative on code quality within behavioral constraints — see REBUILD_PLAN.md §8.
+
+---
+
 ## CI
 
 GitHub Actions runs on every PR to `develop` or `main`:
