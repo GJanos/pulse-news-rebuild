@@ -30,6 +30,8 @@ fix/*     ← one bug per branch (post-parity only)
 
 Never commit directly to `main` or `develop`. Always open a PR.
 
+**All PRs target `develop`.** Never target `main` directly — `main` only receives merges from `develop`. The GitHub repo default branch is set to `develop` so the PR form pre-selects it, but always confirm before creating.
+
 ## Slice discipline
 
 - **One slice = one PR to `develop`.**
