@@ -14,6 +14,8 @@ import type {
   DigestRequest,
   DigestSource,
 } from './types';
+import { rankHeadlines } from './rankHeadlines';
+import type { RankingResult } from './rankHeadlines';
 
 type Log = { debug(msg: string): void; info(msg: string): void; warn(msg: string): void };
 
@@ -223,9 +225,13 @@ export class PerplexitySource implements DigestSource {
       }
     }
 
-    // TODO: Phase 4 — replace with real rankHeadlines
-    const headlines = collected.slice(0, count);
-    const rankingUsage = undefined;
+    const rankResult: RankingResult = await rankHeadlines(
+      collected.slice(0, count),
+      region,
+      this.config,
+    );
+    const headlines = rankResult.headlines;
+    const rankingUsage = rankResult.usage ?? undefined;
 
     const acceptedQualities = allQualities.slice(0, count);
     const filterRejectRate =
