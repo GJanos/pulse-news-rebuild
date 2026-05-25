@@ -23,3 +23,12 @@ Alias `@shared/*` resolves to `../shared/src/*`. Configured in each package's `t
 - `src/regions.ts` — region code constants and metadata
 - `src/config.ts` — pulse.config.json loader and schema
 - `pulse.config.json` — runtime config (regions, fetch params, scheduling, log level)
+
+## Tooling assumptions
+
+- Superpowers methodology is in use. Default workflow per slice:
+  `/superpowers:write-plan` → review → `/superpowers:execute-plan` → `/code-review` → PR.
+- The TypeScript Pro and React Native Expert skills auto-trigger on relevant
+  prompts. If they aren't picking up, name them explicitly.
+- context-mode is active. Tool outputs >5KB are sandboxed automatically;
+  don't ask for raw `cat` of big files — use ctx_search / ctx_execute instead.
