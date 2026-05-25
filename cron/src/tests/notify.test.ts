@@ -1,4 +1,4 @@
-import { persistDigests, persistGlobalDigest, dispatchFcm } from '../notify';
+import { persistDigests, persistGlobalDigest, dispatchFcm, sendNotifications } from '../notify';
 import type { RegionDigest } from '../types';
 import type { PulseConfig } from '@shared/config';
 
@@ -281,5 +281,63 @@ describe('dispatchFcm', () => {
 
     expect(mockSendEachForMulticast).toHaveBeenCalledTimes(2);
     expect(result).toEqual({ sent: 501, total: 501 });
+  });
+});
+
+// ── sendNotifications ──────────────────────────────────────────────────────────
+
+describe('sendNotifications', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSupabase.from.mockReturnThis();
+    mockSupabase.in.mockResolvedValue({ error: null });
+    process.env.SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SECRET_KEY = 'test-key';
+    process.env.FIREBASE_PROJECT_ID = 'test-project';
+    process.env.FIREBASE_CLIENT_EMAIL = 'test@test.iam.gserviceaccount.com';
+    process.env.FIREBASE_PRIVATE_KEY =
+      '-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----';
+  });
+
+  it('skips FCM dispatch when no devices are registered', async () => {
+    mockSupabase.select.mockResolvedValueOnce({ data: [], error: null });
+
+    await sendNotifications([{ region: 'Hungary', headlines: [], attempts: 1 }]);
+
+    expect(mockSendEachForMulticast).not.toHaveBeenCalled();
+  });
+
+  it('dispatches FCM with tokens from all registered devices', async () => {
+    mockSupabase.select.mockResolvedValueOnce({
+      data: [
+        { id: '1', fcm_token: 'tok-a' },
+        { id: '2', fcm_token: 'tok-b' },
+      ],
+      error: null,
+    });
+    mockSendEachForMulticast.mockResolvedValueOnce({
+      successCount: 2,
+      responses: [{ error: null }, { error: null }],
+    });
+
+    await sendNotifications([
+      { region: 'Hungary', headlines: [], attempts: 1 },
+      { region: 'United States', headlines: [], attempts: 1 },
+    ]);
+
+    expect(mockSendEachForMulticast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tokens: ['tok-a', 'tok-b'],
+        data: expect.objectContaining({ regions: 'Hungary,United States' }),
+      }),
+    );
+  });
+
+  it('throws when the device query returns an error', async () => {
+    mockSupabase.select.mockResolvedValueOnce({ data: null, error: { message: 'query failed' } });
+
+    await expect(
+      sendNotifications([{ region: 'Hungary', headlines: [], attempts: 1 }]),
+    ).rejects.toThrow('Failed to read device tokens: query failed');
   });
 });
