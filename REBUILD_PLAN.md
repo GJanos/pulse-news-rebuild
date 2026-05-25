@@ -146,7 +146,7 @@ No `release/` branch until a beta channel exists.
 | 3   | **cron/fetch** — news fetching, all sources, logging (`logging.ts`, `qualityLog.ts`)           | ✓ merged to develop | #3  |
 | 4   | **cron/rank** — per-region Claude reorder + cross-region global selection                      | ✓ merged to develop | #4  |
 | 5   | **cron/notify** — `persistDigests`, FCM dispatch, `sendNotifications`                          | ✓ merged to develop | #5  |
-| 6   | **cron/api** — `daily-digest.ts` + `notify.ts` + `account.ts` Vercel handlers, pipeline wiring | pending             | —   |
+| 6   | **cron/api** — `daily-digest.ts` + `notify.ts` + `account.ts` Vercel handlers, pipeline wiring | ✓ merged to develop | #6  |
 
 Currency rate fetching happens in the UI, not in cron — no `cron/currency` slice.
 

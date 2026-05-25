@@ -38,13 +38,13 @@ Files marked ✓ are landed on `develop`. Unmarked are planned but not yet porte
 | `src/lib/textUtils.ts`        | ✓   | `stripCitations`, `summaryHasUrl`                                                                    |
 | `src/index.ts`                | ✓   | Entry point (stub — wired up in cron/api slice)                                                      |
 | `src/rankHeadlines.ts`        | ✓   | Per-region Claude reorder + cross-region global selection (cron/rank slice)                          |
-| `src/pipeline.ts`             |     | `runFetchPipeline` — staggered `Promise.allSettled` orchestration (cron/api slice)                   |
-| `src/regions.ts`              |     | `resolveRegions()` — re-exports `ALL_REGIONS` from `@shared/regions` (cron/api slice)                |
+| `src/pipeline.ts`             | ✓   | `runFetchPipeline` — staggered `Promise.allSettled` orchestration (cron/api slice)                   |
+| `src/regions.ts`              | ✓   | `resolveRegions()` — re-exports `ALL_REGIONS` from `@shared/regions` (cron/api slice)                |
 | `src/notify.ts`               | ✓   | `persistDigests`, `persistGlobalDigest`, `dispatchFcm`, `sendNotifications` (cron/notify slice)      |
-| `src/bootstrap.ts`            |     | dotenv loader — must be imported first by all runners (cron/api slice)                               |
-| `api/daily-digest.ts`         |     | Vercel handler — fetch + persist + global rank + FCM (cron/api slice)                                |
-| `api/notify.ts`               |     | Vercel handler — FCM to devices in the current 30-minute window (cron/notify slice)                  |
-| `api/account.ts`              |     | Vercel handler — device registration and account deletion (cron/api slice)                           |
+| `src/bootstrap.ts`            | ✓   | dotenv loader — must be imported first by all runners (cron/api slice)                               |
+| `api/daily-digest.ts`         | ✓   | Vercel handler — fetch + persist + global rank + FCM (cron/api slice)                                |
+| `api/notify.ts`               | ✓   | Vercel handler — FCM to devices in the current 30-minute window (cron/api slice)                     |
+| `api/account.ts`              | ✓   | Vercel handler — device registration and account deletion (cron/api slice)                           |
 
 ## Environment variables
 
