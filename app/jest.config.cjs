@@ -9,5 +9,6 @@ module.exports = {
   passWithNoTests: true,
   moduleNameMapper: {
     '^@shared/(.*)$': '<rootDir>/../shared/src/$1',
+    '^react-native-mmkv$': '<rootDir>/__mocks__/react-native-mmkv.ts',
   },
 };

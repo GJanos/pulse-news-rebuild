@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "scripts": {
     "build": "tsc --noEmit",
-    "lint": "eslint --ext .ts,.tsx src"
+    "lint": "eslint --ext .ts,.tsx src",
+    "test": "jest --config jest.config.cjs"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
