@@ -44,9 +44,43 @@
 ### Deferred / Research
 
 - [ ] Recurd user usage statistics for metrics and analysis _(see GDPR section under Go Live)_ #referencing the gdpr section
-- [ ] App refactor ideas — deliberately deferred here
 - [ ] Look at claude graphy plugin — codebase graph knowledge builder
 - [ ] Start using bun as a package manager
+- [ ] "Lets brainstorm on this: There are auto-commit Stop hooks, git guard PreToolUse hooks, and claude-mem's own summary generation — but
+
+  nothing that combines git diff + claude-mem summaries → proposed CLAUDE.md diffs.
+
+  It doesn't exist as a ready-made skill, but it's a very buildable, well-scoped idea. Here's how it would
+
+  actually work:
+
+  The Stop hook script would:
+
+  Run git diff HEAD (uncommitted) + git log --oneline origin/main..HEAD (unpushed commits) to get what
+
+  changed
+
+  Hit claude-mem's HTTP API on localhost:37777 to pull recent session summaries
+
+  Feed both into a local LLM prompt (or Claude SDK if you're okay with that): "Given these code changes and
+
+  what was done this session, what additions/modifications to CLAUDE.md would be useful?"
+
+  Output a unified diff to stdout — which the Stop hook can display for review before you accept/reject
+
+  The tricky parts:
+
+  You'd want the hook to present the diff interactively rather than auto-apply, so it needs to write to a
+
+  temp file and open it, or print clearly to terminal
+
+  CLAUDE.md proposals need to avoid being redundant/noisy — the LLM prompt needs a "only suggest if
+
+  meaningfully new" constraint
+
+  Deciding which of the three git scopes to use (uncommitted / since last commit / since last merge) probably
+
+  wants a config flag"
 
 ---
 
@@ -89,6 +123,8 @@ Allowed — but you need a lawful basis. For product analytics (which articles g
 ---
 
 ## V2
+
+- [ ] **React Navigation migration** — the rebuild uses manual conditional rendering (keeps settings overlay + DigestPager gesture model intact). Post-parity, evaluate migrating to React Navigation for lazy screen mounting and standard back-gesture handling. Caveats: DigestPager's RNGH pan gesture needs `simultaneousHandlers` config to avoid conflicts with a stack navigator's swipe-back; the settings overlay (both screens mounted at once) becomes either a modal or a custom `CardStyleInterpolator`. Only worth it if deep navigation stacks appear (V2 features).
 
 - [ ] **Sources filtering**
 - [ ] **Topic filtering** — user selects preferred/suppressed categories (economy, politics, sports…)
