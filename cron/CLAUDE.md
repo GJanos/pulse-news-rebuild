@@ -45,6 +45,12 @@ Files marked ✓ are landed on `develop`. Unmarked are planned but not yet porte
 | `api/daily-digest.ts`         | ✓   | Vercel handler — fetch + persist + global rank + FCM (cron/api slice)                                |
 | `api/notify.ts`               | ✓   | Vercel handler — FCM to devices in the current 30-minute window (cron/api slice)                     |
 | `api/account.ts`              | ✓   | Vercel handler — device registration and account deletion (cron/api slice)                           |
+| `e2e/print.ts`                | ✓   | Shared pretty-printer — `printHeadlines`, `printGlobalHeadlines`, `printTotals`                      |
+| `e2e/fetch.ts`                | ✓   | E2E runner — fetch + per-region rank, no DB writes (`npm run e2e:fetch`)                             |
+| `e2e/full.ts`                 | ✓   | E2E runner — full pipeline: fetch → persist → global rank → FCM → quality log (`npm run e2e:full`)   |
+| `e2e/notify.ts`               | ✓   | E2E runner — FCM push to all registered devices (`npm run e2e:notify`)                               |
+| `e2e/globalRanking.ts`        | ✓   | E2E runner — re-rank today's Supabase digests globally (`npm run e2e:globalRanking`)                 |
+| `e2e/countryRanking.ts`       | ✓   | E2E runner — per-region rank on CLI-supplied regions (`npm run e2e:countryRanking -- US GB`)         |
 
 ## Environment variables
 

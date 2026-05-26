@@ -1,19 +1,19 @@
-import { initializeLogger, getLogger } from '../logging';
+import { configureLogger, getLogger } from '../logging';
 import { loadPulseConfig } from '../config';
 
 describe('getLogger', () => {
-  it('throws when called before initializeLogger', () => {
-    jest.resetModules();
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { getLogger: fresh } = require('../logging');
-    expect(() => fresh('test')).toThrow('Logger not initialized');
+  it('returns a child logger with info/warn/debug before configureLogger is called', () => {
+    const log = getLogger('pre-config');
+    expect(typeof log.info).toBe('function');
+    expect(typeof log.warn).toBe('function');
+    expect(typeof log.debug).toBe('function');
   });
 });
 
-describe('initializeLogger + getLogger', () => {
-  it('returns a child logger with info/warn/debug after init', () => {
+describe('configureLogger + getLogger', () => {
+  it('returns a child logger with info/warn/debug after configuration', () => {
     const config = loadPulseConfig();
-    initializeLogger(config);
+    configureLogger(config);
     const log = getLogger('test-component');
     expect(typeof log.info).toBe('function');
     expect(typeof log.warn).toBe('function');
