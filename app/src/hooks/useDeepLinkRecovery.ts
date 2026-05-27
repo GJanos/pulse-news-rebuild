@@ -10,7 +10,7 @@ type RecoveryPayload =
   | { type: 'implicit'; accessToken: string; refreshToken: string; isRecovery: boolean };
 
 export function parseRecoveryPayload(url: string): RecoveryPayload | null {
-  if (!url.includes('reset-password') && !url.includes('access_token') && !url.includes('code=')) {
+  if (!url.startsWith('pulse://reset-password')) {
     return null;
   }
   const codeMatch = url.match(/[?&]code=([^&#]+)/);
@@ -89,5 +89,6 @@ export function useDeepLinkRecovery(
       mounted = false;
       sub.remove();
     };
-  }, [supabase, onRecoveryStart]);
+    // onRecoveryStart accesses getState() directly — always fresh, safe to omit from deps
+  }, [supabase]);
 }

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { getSupabase } from '../supabase/client';
 import { storage } from '../storage/mmkv';
 import { getLogger } from '../logger';
@@ -103,13 +104,25 @@ export async function deleteAccount(): Promise<string | null> {
   return null;
 }
 
+export function handleAuthStateChange(event: string, session: Session | null): void {
+  const { setSession, setAppState } = useAppStore.getState();
+  setSession(session);
+  if (event === 'SIGNED_IN') {
+    const { appState } = useAppStore.getState();
+    if (appState === 'unauthenticated') setAppState('prefs-loading');
+  }
+  if (event === 'SIGNED_OUT') setAppState('unauthenticated');
+  if (event === 'PASSWORD_RECOVERY') useAppStore.getState().setIsPasswordRecovery(true);
+  if (event === 'TOKEN_REFRESHED') log.debug('access token refreshed silently');
+}
+
 export function useSupabaseAuth(): AuthActions {
   const supabase = getSupabase();
 
   useDeepLinkRecovery(supabase, () => useAppStore.getState().setIsPasswordRecovery(true));
 
   useEffect(() => {
-    const { setSession, setAuthReady } = useAppStore.getState();
+    const { setAuthReady } = useAppStore.getState();
     if (!supabase) {
       setAuthReady(true);
       return;
@@ -118,7 +131,7 @@ export function useSupabaseAuth(): AuthActions {
     supabase.auth
       .getSession()
       .then(({ data: { session } }) => {
-        setSession(session);
+        useAppStore.getState().setSession(session);
         setAuthReady(true);
         log.info(`session restored: ${session ? session.user.email : 'none'}`);
       })
@@ -131,10 +144,7 @@ export function useSupabaseAuth(): AuthActions {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       log.info(`auth state: ${event}`);
-      setSession(session);
-      if (event === 'PASSWORD_RECOVERY') useAppStore.getState().setIsPasswordRecovery(true);
-      if (event === 'SIGNED_OUT') log.warn('session ended — redirecting to login');
-      if (event === 'TOKEN_REFRESHED') log.debug('access token refreshed silently');
+      handleAuthStateChange(event, session);
     });
 
     return () => {

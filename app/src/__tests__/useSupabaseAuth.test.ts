@@ -4,6 +4,7 @@ import {
   resetPassword,
   updatePassword,
   deleteAccount,
+  handleAuthStateChange,
 } from '../hooks/useSupabaseAuth';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabase } from '../supabase/client';
@@ -114,6 +115,39 @@ describe('updatePassword', () => {
     useAppStore.setState({ isPasswordRecovery: true });
     expect(await updatePassword('weak')).toBe('Weak password');
     expect(useAppStore.getState().isPasswordRecovery).toBe(true);
+  });
+});
+
+describe('handleAuthStateChange', () => {
+  beforeEach(() => {
+    useAppStore.setState({ appState: 'unauthenticated', session: null, isPasswordRecovery: false });
+  });
+
+  it('SIGNED_IN from unauthenticated → prefs-loading', () => {
+    handleAuthStateChange('SIGNED_IN', null);
+    expect(useAppStore.getState().appState).toBe('prefs-loading');
+  });
+
+  it('SIGNED_IN from ready stays at ready (token refresh guard)', () => {
+    useAppStore.setState({ appState: 'ready' });
+    handleAuthStateChange('SIGNED_IN', null);
+    expect(useAppStore.getState().appState).toBe('ready');
+  });
+
+  it('SIGNED_OUT always transitions to unauthenticated', () => {
+    useAppStore.setState({ appState: 'ready' });
+    handleAuthStateChange('SIGNED_OUT', null);
+    expect(useAppStore.getState().appState).toBe('unauthenticated');
+  });
+
+  it('PASSWORD_RECOVERY sets isPasswordRecovery', () => {
+    handleAuthStateChange('PASSWORD_RECOVERY', null);
+    expect(useAppStore.getState().isPasswordRecovery).toBe(true);
+  });
+
+  it('updates session on every event', () => {
+    handleAuthStateChange('TOKEN_REFRESHED', null);
+    expect(useAppStore.getState().session).toBeNull();
   });
 });
 
