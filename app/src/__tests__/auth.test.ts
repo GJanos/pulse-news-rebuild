@@ -1,3 +1,4 @@
+import type { Session } from '@supabase/supabase-js';
 import { createStore } from 'zustand/vanilla';
 import { createAuthSlice, type AuthSlice } from '../store/slices/auth';
 
@@ -15,7 +16,7 @@ describe('auth slice', () => {
 
   it('setSession updates only session', () => {
     const store = makeStore();
-    const s = { user: { email: 'a@b.com' } } as any;
+    const s = { user: { email: 'a@b.com' } } as unknown as Session;
     store.getState().setSession(s);
     expect(store.getState().session).toBe(s);
     expect(store.getState().authReady).toBe(false);
@@ -37,7 +38,7 @@ describe('auth slice', () => {
 
   it('setSession(null) clears session', () => {
     const store = makeStore();
-    store.getState().setSession({ user: {} } as any);
+    store.getState().setSession({ user: {} } as unknown as Session);
     store.getState().setSession(null);
     expect(store.getState().session).toBeNull();
   });

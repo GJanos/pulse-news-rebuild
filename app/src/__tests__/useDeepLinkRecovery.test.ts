@@ -1,3 +1,5 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type * as ReactNS from 'react';
 import { Linking } from 'react-native';
 import { parseRecoveryPayload, useDeepLinkRecovery } from '../hooks/useDeepLinkRecovery';
 
@@ -13,7 +15,7 @@ const refs: Array<{ current: unknown }> = [];
 let refCallCount = 0;
 
 jest.mock('react', () => {
-  const actual = jest.requireActual<typeof import('react')>('react');
+  const actual = jest.requireActual<typeof ReactNS>('react');
   return {
     ...actual,
     useEffect: (fn: () => (() => void) | void) => {
@@ -38,10 +40,7 @@ function resetHookState(): void {
  * Call useDeepLinkRecovery (captures effect + refs), then run the captured
  * effect synchronously. Returns the cleanup function if any.
  */
-function runHook(
-  supabase: import('@supabase/supabase-js').SupabaseClient | null,
-  onRecoveryStart: () => void,
-): () => void {
+function runHook(supabase: SupabaseClient | null, onRecoveryStart: () => void): () => void {
   resetHookState();
   useDeepLinkRecovery(supabase, onRecoveryStart);
   let cleanup: () => void = () => undefined;
@@ -58,7 +57,7 @@ function makeSupabase() {
       exchangeCodeForSession: jest.fn().mockResolvedValue({ error: null }),
       setSession: jest.fn().mockResolvedValue({ error: null }),
     },
-  } as unknown as import('@supabase/supabase-js').SupabaseClient;
+  } as unknown as SupabaseClient;
 }
 
 describe('parseRecoveryPayload', () => {

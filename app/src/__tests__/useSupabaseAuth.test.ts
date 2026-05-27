@@ -5,6 +5,9 @@ import {
   updatePassword,
   deleteAccount,
 } from '../hooks/useSupabaseAuth';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { getSupabase } from '../supabase/client';
+import { storage } from '../storage/mmkv';
 import { useAppStore } from '../store';
 
 const mockSignInWithPassword = jest.fn();
@@ -32,12 +35,9 @@ jest.mock('../logger', () => ({
 }));
 jest.mock('../hooks/useDeepLinkRecovery', () => ({ useDeepLinkRecovery: jest.fn() }));
 
-const { getSupabase } = require('../supabase/client') as { getSupabase: jest.Mock };
-const { storage } = require('../storage/mmkv') as { storage: { clearAll: jest.Mock } };
-
 beforeEach(() => {
   jest.clearAllMocks();
-  getSupabase.mockReturnValue(mockClient);
+  jest.mocked(getSupabase).mockReturnValue(mockClient as unknown as SupabaseClient);
   useAppStore.setState({ session: null, authReady: false, isPasswordRecovery: false });
 });
 
@@ -53,7 +53,7 @@ describe('signIn', () => {
   });
 
   it('returns configured error when supabase is null', async () => {
-    getSupabase.mockReturnValue(null);
+    jest.mocked(getSupabase).mockReturnValue(null);
     expect(await signIn('a@b.com', 'pass')).toBe('Supabase not configured');
   });
 });

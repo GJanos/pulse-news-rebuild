@@ -1,3 +1,4 @@
+import type { Session } from '@supabase/supabase-js';
 import { handleAuthReady } from '../hooks/useAuthInit';
 import { useAppStore } from '../store';
 
@@ -23,7 +24,7 @@ describe('handleAuthReady', () => {
   });
 
   it('transitions to prefs-loading when authReady=true and session exists', () => {
-    useAppStore.setState({ session: { user: { email: 'a@b.com' } } as any });
+    useAppStore.setState({ session: { user: { email: 'a@b.com' } } as unknown as Session });
     handleAuthReady(true);
     expect(useAppStore.getState().appState).toBe('prefs-loading');
   });
