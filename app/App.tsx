@@ -37,7 +37,7 @@ import SettingsStub from './src/screens/stubs/SettingsStub';
 import UpdateRequiredScreen from './src/screens/stubs/UpdateRequiredScreen';
 import MaintenanceScreen from './src/screens/stubs/MaintenanceScreen';
 import type { AppState, ScreenId } from './src/types';
-import type { Theme, Aesthetic } from './src/themes';
+import type { Theme } from './src/themes';
 import type { AuthActions } from './src/hooks/useSupabaseAuth';
 
 const queryClient = new QueryClient();
