@@ -1,4 +1,6 @@
-export type { ContinentName, Region } from '@shared/regions';
+import type { ContinentName, Region } from '@shared/regions';
+
+export type { ContinentName, Region };
 
 export interface Headline {
   title: string;
@@ -60,5 +62,5 @@ export interface DeviceRow {
 
 export interface ArticleEntry {
   h: Headline;
-  r: import('@shared/regions').Region;
+  r: Region;
 }

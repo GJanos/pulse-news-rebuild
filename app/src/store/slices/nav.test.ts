@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { createNavSlice, NAV_KEY, NAV_TTL_MS, type NavSlice } from './nav';
+import { createNavSlice, NAV_TTL_MS, type NavSlice } from './nav';
 
 jest.mock('../../storage/mmkv', () => ({
   storage: {
