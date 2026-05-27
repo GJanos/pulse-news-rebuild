@@ -108,8 +108,7 @@ function RootScreens({ appState, screen, theme }: RootScreensProps): React.React
       edges={['top', 'bottom', 'left', 'right']}
       style={[s.root, { backgroundColor: theme.bg }]}
     >
-      {screen === 'splash' && <DigestFlowStub />}
-      {(screen === 'digest' || screen === 'settings') && <DigestFlowStub />}
+      {(screen === 'splash' || screen === 'digest') && <DigestFlowStub />}
       {screen === 'settings' && <SettingsStub />}
     </SafeAreaView>
   );

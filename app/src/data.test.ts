@@ -1,8 +1,8 @@
-import { isoDateAtDayIndex, formatLongDate, sortedSelectedRegions, TODAY_ISO } from './data';
+import { isoDateAtDayIndex, formatLongDate, sortedSelectedRegions, getTodayISO } from './data';
 
 describe('isoDateAtDayIndex', () => {
   it('index 0 returns today in YYYY-MM-DD format', () => {
-    expect(isoDateAtDayIndex(0)).toBe(TODAY_ISO);
+    expect(isoDateAtDayIndex(0)).toBe(getTodayISO());
     expect(isoDateAtDayIndex(0)).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
@@ -18,8 +18,8 @@ describe('isoDateAtDayIndex', () => {
     expect(isoDateAtDayIndex(7)).toBe(d.toISOString().slice(0, 10));
   });
 
-  it('TODAY_ISO matches isoDateAtDayIndex(0)', () => {
-    expect(TODAY_ISO).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  it('getTodayISO returns a valid date string', () => {
+    expect(getTodayISO()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });
 

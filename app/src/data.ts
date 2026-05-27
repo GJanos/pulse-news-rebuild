@@ -7,11 +7,14 @@ export function sortedSelectedRegions(selected: string[]): Region[] {
   return selected.map((name) => regionMap.get(name)).filter((r): r is Region => r !== undefined);
 }
 
-export const TODAY_ISO: string = new Date().toISOString().slice(0, 10);
+/** Returns today's UTC date as YYYY-MM-DD. Called per-use so it stays correct past midnight. */
+export function getTodayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 /** Returns the UTC ISO date string that is `dayIndex` days before today. */
 export function isoDateAtDayIndex(dayIndex: number): string {
-  const d = new Date(TODAY_ISO + 'T00:00:00Z');
+  const d = new Date(getTodayISO() + 'T00:00:00Z');
   d.setUTCDate(d.getUTCDate() - dayIndex);
   return d.toISOString().slice(0, 10);
 }

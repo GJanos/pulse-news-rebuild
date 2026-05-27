@@ -1,11 +1,11 @@
 import { create } from 'zustand';
-import { createNavSlice, NAV_TTL_MS, type NavSlice } from './nav';
+import { createNavSlice, NAV_KEY, NAV_TTL_MS, type NavSlice } from './nav';
 
 jest.mock('../../storage/mmkv', () => ({
   storage: {
     getString: jest.fn<string | undefined, [string]>(),
     set: jest.fn<void, [string, string]>(),
-    delete: jest.fn<void, [string]>(),
+    remove: jest.fn<boolean, [string]>(),
   },
   supabaseStorage: {},
 }));
@@ -15,7 +15,7 @@ const mockStorage = (
     storage: {
       getString: jest.Mock;
       set: jest.Mock;
-      delete: jest.Mock;
+      remove: jest.Mock;
     };
   }
 ).storage;
@@ -132,7 +132,7 @@ describe('nav slice — restoreNavState', () => {
     expect(s.getState().screen).toBe('digest');
   });
 
-  it('falls back to defaults when TTL expired', () => {
+  it('falls back to defaults when TTL expired and deletes the stale key', () => {
     mockStorage.getString.mockReturnValue(
       savedNav({ screen: 'settings', dayIndex: 2, savedAt: Date.now() - NAV_TTL_MS - 1000 }),
     );
@@ -140,6 +140,15 @@ describe('nav slice — restoreNavState', () => {
     s.getState().restoreNavState();
     expect(s.getState().screen).toBe('digest');
     expect(s.getState().dayIndex).toBe(0);
+    expect(mockStorage.remove).toHaveBeenCalledWith(NAV_KEY);
+  });
+
+  it('falls back to defaults for unknown screen name and deletes the stale key', () => {
+    mockStorage.getString.mockReturnValue(savedNav({ screen: 'article' }));
+    const s = makeStore();
+    s.getState().restoreNavState();
+    expect(s.getState().screen).toBe('digest');
+    expect(mockStorage.remove).toHaveBeenCalledWith(NAV_KEY);
   });
 
   it('does not crash on corrupted JSON', () => {

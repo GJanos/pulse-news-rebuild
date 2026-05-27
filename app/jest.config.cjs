@@ -7,6 +7,7 @@ module.exports = {
   roots: ['<rootDir>/src'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   passWithNoTests: true,
+  setupFiles: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
     '^@shared/(.*)$': '<rootDir>/../shared/src/$1',
     '^react-native-mmkv$': '<rootDir>/__mocks__/react-native-mmkv.ts',
