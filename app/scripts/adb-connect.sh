@@ -7,16 +7,22 @@
 #   port  default: prompted from you (check phone → Developer Options → Wireless debugging)
 
 ADB=/mnt/c/Users/HP/AppData/Local/Android/Sdk/platform-tools/adb.exe
-IP=${1:-192.168.64.4}
+IP=${1:-192.168.64}
 
 if [ -n "$2" ]; then
-  PORT=$2
+  IP_END=$2
+else
+  read -rp "Last digit of ipv4 address: " IP_END
+fi
+
+if [ -n "$3" ]; then
+  PORT=$3
 else
   read -rp "Connection port (from phone → Wireless debugging): " PORT
 fi
 
-echo "Connecting to $IP:$PORT ..."
-"$ADB" connect "$IP:$PORT"
+echo "Connecting to $IP.$IP_END:$PORT ..."
+"$ADB" connect "$IP.$IP_END:$PORT"
 
 echo ""
 echo "Devices:"
