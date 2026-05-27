@@ -35,6 +35,65 @@ FCM config lives in `app/android/app/google-services.json`, not env vars.
 
 ---
 
+## Android dev setup on WSL2 (one-time)
+
+The Android SDK lives on Windows; WSL2 needs to reach it.
+
+**1. Add to `~/.bashrc`:**
+
+```bash
+export ANDROID_HOME=/mnt/c/Users/HP/AppData/Local/Android/Sdk
+export JAVA_HOME="/mnt/c/Program Files/Android/Android Studio/jbr"
+export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/emulator:$JAVA_HOME/bin
+```
+
+**2. Create an `adb` wrapper** so WSL2 uses the Windows ADB server (which can reach your phone):
+
+```bash
+mkdir -p ~/.local/bin
+cat > ~/.local/bin/adb << 'EOF'
+#!/bin/bash
+exec /mnt/c/Users/HP/AppData/Local/Android/Sdk/platform-tools/adb.exe "$@"
+EOF
+chmod +x ~/.local/bin/adb
+```
+
+**3. Pair your phone (one-time per device):**
+
+- Phone: Settings → Developer Options → Wireless debugging → **Pair device with pairing code**
+- Note the pairing port and 6-digit code
+- In Windows CMD (not WSL2):
+
+```cmd
+adb pair 192.168.64.4:<pairing-port>
+```
+
+Enter the code. You'll see `Successfully paired`.
+
+---
+
+## Connecting your phone (every session)
+
+Your phone's connection port changes each session. Run the helper script:
+
+```bash
+./scripts/adb-connect.sh
+```
+
+Or manually — check the port in Settings → Developer Options → Wireless debugging, then in Windows CMD:
+
+```cmd
+adb connect 192.168.64.4:<connection-port>
+```
+
+Verify WSL2 sees it:
+
+```bash
+adb devices   # should list 192.168.64.4:<port>  device
+```
+
+---
+
 ## Running (added by app/foundation slice)
 
 This app uses native modules (`@react-native-firebase/messaging`), so **Expo Go will not work** — a custom dev client is required.

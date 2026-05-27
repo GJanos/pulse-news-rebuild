@@ -48,40 +48,6 @@ Legacy codebase: `/home/hp/projects/pulse-news-legacy/`
 When starting a slice: read the corresponding legacy file first, then port behavior exactly.
 Do not delete the legacy repo until parity is declared and `v1.0.0` is tagged.
 
-## Shared imports
-
-```typescript
-import type { Headline } from '@shared/types';
-import { REGIONS } from '@shared/regions';
-```
-
-`@shared/*` resolves to `../shared/src/*`. Configured via `paths` in each `tsconfig.json` and `moduleNameMapper` in each `jest.config.cjs`.
-
-## No npm workspaces
-
-Run `npm install` inside each package directory independently.
-Root `npm install` installs only shared devtools (Prettier, ESLint, Husky).
-
-## Available skills
-
-The following Claude Code skills are installed and should be invoked when their domain is relevant:
-
-| Skill                 | Invoke when                                                                    |
-| --------------------- | ------------------------------------------------------------------------------ |
-| `typescript-pro`      | Typing, generics, branded types, tsconfig, discriminated unions                |
-| `react-expert`        | React 18+ components, hooks, Suspense, Server Components                       |
-| `react-native-expert` | Expo/RN navigation, native modules, FlatList perf, SafeArea, platform code     |
-| `test-master`         | Writing or reviewing tests, coverage gaps, mocking strategy, test architecture |
-| `security-reviewer`   | Slices touching auth, API endpoints, notifications, deep links                 |
-| `debugging-wizard`    | Investigating errors, stack traces, unexpected behavior                        |
-| `code-reviewer`       | Pre-PR quality pass (complements `/code-review`)                               |
-
-During porting slices, these skills are authoritative on code quality within behavioral constraints — see REBUILD_PLAN.md §8.
-
-**Rule: always invoke the relevant skill via the `Skill` tool before writing code in its domain.** Knowing the patterns is not a substitute — skills may have evolved and must be read fresh. If multiple domains are involved (e.g. TypeScript + tests), invoke both before starting.
-
----
-
 ## Post-merge branch cleanup
 
 After any PR is merged, immediately run:
@@ -99,11 +65,9 @@ Also clean up any other stale merged `feat/*` branches at the same time. Do this
 
 ## Context-mode
 
-Use `ctx_execute` / `ctx_execute_file` / `ctx_batch_execute` (context-mode MCP tools) instead of Bash for any command that reads, queries, lists, diffs, tests, builds, or inspects output.
+Use `ctx_execute` / `ctx_execute_file` / `ctx_batch_execute` instead of Bash for any command that reads, queries, lists, diffs, tests, builds, or inspects output. Bash only for: file mutations, git writes, `cd`/`pwd`, process control, package install.
 
-Bash is only for: file mutations (`mkdir`, `mv`, `cp`, `rm`), git writes (`add`, `commit`, `push`, `checkout`, `branch`, `merge`), navigation (`cd`, `pwd`), process control, package install, and `echo`.
-
-When uncertain → use context-mode. Every KB of unnecessary output reduces session quality.
+No subagents for read-only tasks — Use `ctx_batch_execute` + `ctx_search` for exploration instead.
 
 ---
 

@@ -2,14 +2,14 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { createAppSlice, type AppSlice } from './slices/app';
 import { createNavSlice, type NavSlice } from './slices/nav';
+import { createAuthSlice, type AuthSlice } from './slices/auth';
 
-// Later slices extend this type:
-// create<AppSlice & NavSlice & AuthSlice & PrefsSlice & DeviceSlice>()(...)
-export const useAppStore = create<AppSlice & NavSlice>()(
+export const useAppStore = create<AppSlice & NavSlice & AuthSlice>()(
   devtools(
     (...a) => ({
       ...createAppSlice(...a),
       ...createNavSlice(...a),
+      ...createAuthSlice(...a),
     }),
     { name: 'PulseStore', enabled: __DEV__ },
   ),

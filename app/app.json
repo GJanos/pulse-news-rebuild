@@ -18,7 +18,7 @@
         "backgroundColor": "#fafaf7"
       },
       "googleServicesFile": "./google-services.json",
-      "package": "com.gjanos.pulsenews",
+      "package": "com.pulse.news",
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
