@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Pulse",
+    "slug": "pulse-news",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#fafaf7"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#fafaf7"
+      },
+      "googleServicesFile": "./google-services.json",
+      "package": "com.gjanos.pulsenews",
+      "permissions": [
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.gjanos.pulsenews",
+      "googleServicesFile": "./GoogleService-Info.plist"
+    },
+    "plugins": [
+      "@react-native-firebase/app",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true
+          }
+        }
+      ]
+    ],
+    "extra": {}
+  }
+}

@@ -2,7 +2,7 @@
 
 ## V1
 
-## Code
+### Deployment
 
 - [ ] **Set `EXPO_PUBLIC_API_URL`** — once Vercel is deployed, add the deployment URL to `app/.env` so `POST /api/account` (server-side device registration) becomes available
 - [ ] **Tighten `devices` table RLS** — current policies use `USING (true)` / `WITH CHECK (true)`, meaning any authenticated user can read/write any device row. Restrict to `user_id = auth.uid()` or move registration through the Vercel `/api/account` route which enforces identity server-side
@@ -19,157 +19,133 @@
     - `GET /api/notify` — FCM to devices in current 30-min window; schedule `*/30 * * * *`
   - `cron/index.ts` remains the local test runner (sends to all devices, no time filtering)
 
-- recurd user usage statistics for metrics and analysis #referencing the gdpr section
-- preferences still uses asyncstorage
+### Bugs
 
-## Features
+- [ ] Force refresh not allowed in empty digests page — empty today should not be cached
+- [ ] Notifications are often missed due to Android issues
+- [ ] Currency rates are showing bad values
 
-### App folder review — high-level findings
+### UI & Polish
 
-### Cron folder review
-
-# UI
-
-- Article view needs to be better organized
-- Article view lost the summary text and now only contains title + description
-- Tune and reorder menu button is not visible enough
-- Reorder buttons need to be larger, more spaced out, and proper buttons instead of arrows
-- "Jump to Today" button should be moved to a different location
-  - Possibly to the right side of the current date?
-
-- Bring back top arrow navigation buttons (left and right)
-  - Only display available navigation directions
-
-- Lock vertical screen orientation while using the app
-
-# Small Bugs
-
-- Currency cache should not use the current day in the cache key; use a much looser timeframe instead
-- Settings max regions value should use `config.fetchCount` instead of a fixed constant of 10
-- Cron request retry recency logic (`day day day day week week`) should be extracted into config
-  - Try week/month retry intervals as tests
-
-# Behaviour
-
-- When opening the app from a notification, the notification does not disappear and the app still shows a notification badge/icon
-- Android swipe navigation should be disabled because it interferes with app gestures
-  - When an article is opened in the browser or via the "Open Article" button, enable left-swipe back navigation again
-
-- Swipe navigation should be more sensitive
-
-# Extra Features (I need your opinion on whether to implement these or not)
-
-- When clicking currency display data, show a small weekly chart
-- Allow choosing a date by clicking the current date and navigating directly to it
-  - Might be tricky or unnecessary since navigation is limited to `localHistory` days
-
-Reviewing the current app patterns for navigation, swipe behavior, and summary layout so I can give accurate planning advice.
-
-Searched for regex `Jump to Today|jump to today|localHistory|swipe|swipe navigation|summary` (`**/app/src/**`), 32 results
-
-Searched for regex `currency|Currency` (`**/app/src/**`), 84 results
-
-Searched for regex `notification badge|notification|badge|onNotification|open from notification` (`**/app/src/**`), 48 results
-
-## Plan review
-
-Yes — these are all reasonable improvements, and the list is a good roadmap. I’d group them by priority and risk.
-
----
-
-### UI
-
-- `Only display available navigation directions` — ✅ also good. Don’t show inactive arrows.
-- `Lock vertical screen orientation while using the app` — probably okay, but with caveats:
-  - if the layout is strongly portrait-first and landscape looks bad, lock it.
-
----
-
----
+- [ ] Lock vertical screen orientation while using the app
+- [ ] Swipe navigation should be more sensitive
 
 ### Behaviour
 
-- `Android swipe navigation should be disabled because it interferes with app gestures` — ✅ valid. If app-level horizontal swipes are core navigation, disable conflicting system gestures.
-  - `When an article is opened in the browser or via the "Open Article" button, enable left-swipe back navigation again` — also reasonable. Just make sure the behavior is predictable and documented visually.
-    On disabling Android system swipe-back during digest navigation: Yes, agree. The DigestPager uses RNGH pan for horizontal navigation — left/right edges where Android 10+ wants the system back gesture. Conflict is real and worth fixing.
+- [ ] Android swipe navigation should be disabled because it interferes with app gestures
+  - When an article is opened in the browser or via the "Open Article" button, enable left-swipe back navigation again
 
-Caveat — this is not trivial:
+  > **Notes:** The DigestPager uses RNGH pan for horizontal navigation — left/right edges where Android 10+ wants the system back gesture. Conflict is real. Use `View.systemGestureExclusionRects` (Android only, per-View opt-in). Caveats: max 200dp per edge, newer RN/Expo only. Avoid `setNavigationMode` — requires custom native code.
+  >
+  > Restoring system edge-swipe-back on the article screen is automatic — just don't apply `systemGestureExclusionRects` there. A JS-level pan-to-close is a separate GestureDetector and more work.
 
-React Native exposes View.systemGestureExclusionRects (Android only) to tell the system "don't intercept gestures in these rects." This is the right API.
-Caveats: only excludes up to 200dp total per edge (Android system limit), and only available in newer RN/Expo versions. Check what your version supports before assuming.
-An alternative (more aggressive) is setNavigationMode via a native module — but it requires custom native code and changes the entire system UI mode. Don't recommend.
-I'd start with systemGestureExclusionRects on the pager surface.
-On article screen left-swipe-back: Need clarification — two different things:
+- [ ] Swiping needs to be adjusted again
 
-Restore Android system edge-swipe-back when on article screen — this happens automatically if you don't apply systemGestureExclusionRects on the article screen (it's per-View opt-in). Free.
-Add a JS-level horizontal pan on the article screen that closes it on swipe — this is a real implementation: another GestureDetector wrapping the article content.
-If you mean (1), it's already the default — just don't extend the exclusion to the article screen. If you mean (2), it's more work but gives consistent UX with the pager.
+### Deferred / Research
+
+- [ ] Recurd user usage statistics for metrics and analysis _(see GDPR section under Go Live)_ #referencing the gdpr section
+- [ ] Look at claude graphy plugin — codebase graph knowledge builder
+- [ ] Start using bun as a package manager
+- [ ] "Lets brainstorm on this: There are auto-commit Stop hooks, git guard PreToolUse hooks, and claude-mem's own summary generation — but
+
+  nothing that combines git diff + claude-mem summaries → proposed CLAUDE.md diffs.
+
+  It doesn't exist as a ready-made skill, but it's a very buildable, well-scoped idea. Here's how it would
+
+  actually work:
+
+  The Stop hook script would:
+
+  Run git diff HEAD (uncommitted) + git log --oneline origin/main..HEAD (unpushed commits) to get what
+
+  changed
+
+  Hit claude-mem's HTTP API on localhost:37777 to pull recent session summaries
+
+  Feed both into a local LLM prompt (or Claude SDK if you're okay with that): "Given these code changes and
+
+  what was done this session, what additions/modifications to CLAUDE.md would be useful?"
+
+  Output a unified diff to stdout — which the Stop hook can display for review before you accept/reject
+
+  The tricky parts:
+
+  You'd want the hook to present the diff interactively rather than auto-apply, so it needs to write to a
+
+  temp file and open it, or print clearly to terminal
+
+  CLAUDE.md proposals need to avoid being redundant/noisy — the LLM prompt needs a "only suggest if
+
+  meaningfully new" constraint
+
+  Deciding which of the three git scopes to use (uncommitted / since last commit / since last merge) probably
+
+  wants a config flag"
 
 ---
 
-### Extra Features
+## Go Live
 
-- `When clicking currency display data, show a small weekly chart` — optional and nice-to-have.
-  - I’d treat it as a secondary polish after the main digest/notification flow is stable.
-  - Implement only if the currency data is already available and the chart doesn’t clutter the screen.
+### Store Requirements
+
+- [ ] Privacy Policy hosted at a URL — must name: email, device token, preferences stored in Supabase; third parties Perplexity, Anthropic, Firebase. Link in app (Settings) and store listing
+- [ ] Account deletion in-app — Google hard-requires this for any app with accounts
+- [ ] Content rating questionnaire (IARC for Play, similar for App Store)
+- [ ] Store assets: icon all sizes, 2–8 screenshots, short + long description
+
+**Play Store:**
+
+- [ ] Data Safety form — accurately declare what you collect and share; mismatch with actual behaviour gets you rejected
+- [ ] Target SDK 34+ (Android 14)
+
+**App Store:**
+
+- [ ] Apple Developer account ($99/yr)
+- [ ] Privacy nutrition labels
+- [ ] APNs key for push (see V2 iOS push item)
+- [ ] Privacy manifest file if you use certain Apple APIs
+
+### GDPR
+
+Allowed — but you need a lawful basis. For product analytics (which articles get read, time in app), "legitimate interests" covers it without a consent popup, as long as your Privacy Policy discloses it. Aggregate/pseudonymous stats (user ID + article ID + timestamp) = fine with disclosure. Selling or sharing with third parties = needs explicit consent.
+
+- [ ] Right to deletion — account deletion covers this
+- [ ] Right to data export — lower priority, rarely enforced for small apps
+
+---
+
+## Extra Features (I need your opinion on whether to implement these or not)
+
+- [ ] When clicking currency display data, show a small weekly chart
+
+  > Nice-to-have. Treat as secondary polish after the main digest/notification flow is stable. Implement only if currency data is already available and chart doesn't clutter the screen.
 
 ---
 
 ## V2
 
+- [ ] **React Navigation migration** — the rebuild uses manual conditional rendering (keeps settings overlay + DigestPager gesture model intact). Post-parity, evaluate migrating to React Navigation for lazy screen mounting and standard back-gesture handling. Caveats: DigestPager's RNGH pan gesture needs `simultaneousHandlers` config to avoid conflicts with a stack navigator's swipe-back; the settings overlay (both screens mounted at once) becomes either a modal or a custom `CardStyleInterpolator`. Only worth it if deep navigation stacks appear (V2 features).
+
 - [ ] **Sources filtering**
-
 - [ ] **Topic filtering** — user selects preferred/suppressed categories (economy, politics, sports…)
-- [ ] **Pulse weekly** clickabel grey down pointing kacsacsor, next to pulse daily text ,when clicked -> dropdown allowing selection of daily/weekly/monthly digest
-  - [ ] daily is currently ready, weekly is the same call, but with recency week, monthly with recency month
+- [ ] **Pulse weekly** — clickable grey down-pointing caret next to "Pulse Daily"; dropdown for daily/weekly/monthly digest
+  - Daily: ready; weekly = same call with `recency: week`; monthly = `recency: month`
+- [ ] **iOS push notifications** — FCM needs an APNs key from Apple Developer account uploaded to Firebase (Project Settings → Cloud Messaging → Apple app config → APNs Authentication Key). Requires paid Apple Developer account ($99/yr). Defer until ready to test on a real iOS device.
+- [ ] **Language / translation** — setting for returned article language; default English (no translation)
+  - Cron side: translate the full digest after fetching, store alongside original in Supabase with a `lang` column on the `digests` table
+  - Use DeepL (not Claude, not Mistral) — purpose-built for translation, free up to 500k chars/month, better quality than an LLM for most language pairs
 
-- [ ] IOS in general **To actually receive push notifications** on iOS, FCM needs an APNs key from your Apple Developer account uploaded to Firebase. Path: Firebase Console → Project Settings → Cloud Messaging → Apple app configuration → APNs Authentication Key. This requires a paid Apple Developer account ($99/yr). You can defer this until you're ready to test push on a real iOS device — Android push works without it.
+---
 
-- [ ] setting for returned article langue get english news -> then mistral llm for translation
-  - Setting in Settings: user picks their language (default: English / no translation)
-    Cron side, one language at a time: translate the full digest after fetching, store it alongside the original in Supabase under the same structure but with a lang column on the digests table
-    Use DeepL (not Claude, not Mistral) — it's purpose-built for translation, free up to 500k chars/month, and better quality than an LLM for most language pairs
+## Business Model
 
-# Go live
+Pro deepsearch model runs for potential VIP tier users — would ~10x costs, so need users first.
 
-## Usage statistics
+**Cost estimate per active user per day:** Perplexity (~9 regions × $0.005) + Anthropic ranking ($0.002) ≈ $0.05/day = ~$18/year. Before Supabase, Firebase, and hosting.
 
-On GDPR and usage stats: Yes, allowed — but you need a lawful basis. For product analytics (which articles get read, time in app), "legitimate interests" covers it without needing a consent popup, as long as your Privacy Policy discloses it. The line is: aggregate/pseudonymous stats (user ID + article ID + timestamp) = fine with disclosure. Selling or sharing that data with third parties = needs explicit consent. Keep it internal for product improvement and you're clean.
+**Recommendation — Freemium:**
 
-Play Store / App Store eligibility — what you actually need:
+- Free: today only, 3 regions max, no global headlines, no history
+- Premium ($2.99/month or $19.99/year): all regions, global headlines, full history, tune mode, currency rates, custom notify time
 
-Mandatory (both stores):
-
-Privacy Policy hosted at a URL — must name: email, device token, preferences stored in Supabase; third parties Perplexity, Anthropic, Firebase. Link must appear in the app (Settings) and in the store listing
-Account deletion in-app — Google now hard-requires this for any app with accounts. Apple strongly recommends it. Already on the todo
-Content rating questionnaire (IARC for Play, similar for App Store)
-Store assets: icon all sizes, 2-8 screenshots, short + long description
-Play Store specifically:
-
-Data Safety form — accurately declare what you collect and share; mismatch with actual behaviour gets you rejected
-Target SDK 34+ (Android 14)
-App Store specifically:
-
-Apple Developer account ($99/yr)
-Privacy nutrition labels
-APNs key for push (already noted in your todo)
-Privacy manifest file if you use certain Apple APIs
-GDPR (if EU users):
-
-Right to deletion (account deletion covers this)
-Right to data export — lower priority, rarely enforced for small apps
-Consent for anything beyond strictly necessary processing — your use case is pretty clean here
-
-# Business model:
-
-Pro deepsearch model runs for potential VIP tier users , but that whould almost 10x my costs so maybe i whould need users first then the feature, but I suppose that is not how it works
-
-Your real constraint is API cost. Rough estimate per active user per day: Perplexity (~9 regions × $0.005) + Anthropic ranking ($0.002) ≈ $0.05/day = ~$18/year. That's before Supabase, Firebase, hosting. A free app with no monetisation loses money at scale.
-
-What works for this type of app:
-
-Freemium (my recommendation):
-
-Free: today only, 3 regions max, no global headlines, no history
-Premium ($2.99/month or $19.99/year): all regions, global headlines, full history, tune mode, currency rates, custom notify time
-The free tier is genuinely useful enough to hook users. The premium features are the ones power users actually want. At $20/year you cover API costs at ~1,000 active users and start profiting beyond that.
+At $20/year, API costs are covered at ~1,000 active users and profitable beyond that.

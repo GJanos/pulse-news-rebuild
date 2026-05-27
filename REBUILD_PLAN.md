@@ -152,16 +152,16 @@ Currency rate fetching happens in the UI, not in cron — no `cron/currency` sli
 
 ### Frontend slices (after backend lands on develop)
 
-| #   | Slice                                                                                                           | Status  |
-| --- | --------------------------------------------------------------------------------------------------------------- | ------- |
-| 1   | **app/foundation** — App.tsx shell, fonts, theme, safe areas, navigation skeleton, error boundaries             | pending |
-| 2   | **app/auth-flow** — Supabase auth + login/signup/reset screens + session hook                                   | pending |
-| 3   | **app/digest-flow** — preferences + digest fetching + currency rates hook + DigestPage + DigestPager + sections | pending |
-| 4   | **app/settings-flow** — Settings screen + region picker + preference editing                                    | pending |
-| 5   | **app/article** — ArticleScreen + WebBrowser handoff                                                            | pending |
-| 6   | **app/notifications** — notification registration + deep link parsing + password recovery flow                  | pending |
+| #   | Slice                                                                                                     | Status  |
+| --- | --------------------------------------------------------------------------------------------------------- | ------- |
+| 1   | **app/foundation** — App.tsx shell, Zustand store skeleton, boot state machine, fonts, themes, safe areas | pending |
+| 2   | **app/auth-flow** — Supabase auth + login/signup/reset screens + session hook                             | pending |
+| 3   | **app/digest-flow** — digest fetching + currency rates + DigestPage + DigestPager + sections              | pending |
+| 4   | **app/settings-flow** — Settings screen + region picker + preference editing                              | pending |
+| 5   | **app/article** — ArticleScreen + WebBrowser handoff                                                      | pending |
+| 6   | **app/notifications** — notification registration + deep link parsing + password recovery flow            | pending |
 
-Some files (App.tsx, hooks) get touched across multiple slices. That is expected. Each slice adds the parts of those files it needs; it does not rewrite from scratch.
+Some files (App.tsx, the store) get touched across multiple slices. That is expected. Each slice adds the parts of those files it needs; it does not rewrite from scratch.
 
 Each slice kickoff prompt explicitly scopes the legacy regions to port. Example:
 
@@ -169,7 +169,129 @@ Each slice kickoff prompt explicitly scopes the legacy regions to port. Example:
 
 ---
 
-## 8. Per-slice discipline
+## 8. Frontend architecture decisions
+
+These decisions were made before app/foundation was written. **Do not revisit without re-reading this section in full.**
+
+---
+
+### 8.1 State: Zustand + React Query
+
+The frontend uses **Zustand** for all synchronous global state (nav, prefs, auth session) and **React Query** for all async server data (digest payloads, global headlines, currency rates). Plain React Context is not used for app-wide state.
+
+#### Why not prop-drilling (legacy approach)
+
+The legacy `App.tsx` passes `theme`, `aes`, and the full `UserPreferences` object as props into `DigestPager → DigestPage → RegionSection`. Every `setPref` call creates a new `UserPreferences` object (spread + bumped `updatedAt`). That new reference breaks `React.memo` on `DigestPager` and `DigestPage`, causing them to re-render on every settings keystroke — including re-running `useDigestPageData` with its `sortedSelectedRegions` and three `useMemo` chains.
+
+The legacy fix was the **digestPrefs freeze**: `App.tsx` maintains a frozen snapshot of prefs and passes it to `DigestPager` while settings is open. This is a band-aid. Zustand selectors remove the root cause.
+
+#### Why not Context
+
+Context re-renders every subscriber when the context value changes. A `PrefsContext` holding the 15-field `UserPreferences` object would re-render `DigestPage` on every settings change — even fields `DigestPage` doesn't read. Splitting into many fine-grained contexts reduces this but doesn't eliminate it.
+
+#### Why Zustand
+
+`useAppStore(s => s.prefs.selectedRegions)` re-renders the component only when `selectedRegions` changes. Changing `theme` in settings does not touch `DigestPage`. The digestPrefs freeze becomes structurally unnecessary. The benefit scales as the tree deepens.
+
+Four concrete reasons grounded in the legacy code:
+
+1. **The digestPrefs freeze is a Zustand symptom.** The hack exists because the app can't afford re-rendering `DigestPager` on every settings change. Zustand selectors make it structurally impossible.
+2. **Module-level Map caches in `useDigest`, `useGlobalHeadlines`, `useCurrencyRates` prove the app already needs external state.** They used module-scope Maps because React state alone couldn't survive remounts. Zustand formalizes this with subscriptions.
+3. **Notification handlers need to navigate outside React.** The current `useAppNavigation` uses an `onDailyDigestRef` ref dance. With Zustand: `useAppStore.getState().setScreen('digest')` — no refs, no callbacks.
+4. **`useNavState` is global persistent state, not local component state.** It manages a 30-min TTL, 700ms debounced MMKV writes, and an `AppState` listener. It belongs centralized.
+
+#### What goes where
+
+| State                                             | Owner                        | Reason                                                          |
+| ------------------------------------------------- | ---------------------------- | --------------------------------------------------------------- |
+| `screen`, `dayIndex`, `article`                   | Zustand `nav` slice          | Persistent, globally read, needed by notification handlers      |
+| `prefs` (UserPreferences)                         | Zustand `prefs` slice        | Read by many components; selectors eliminate cascade re-renders |
+| `session`, `authReady`, `isPasswordRecovery`      | Zustand `auth` slice         | Globally read; written by auth hook                             |
+| `appState` (boot state machine)                   | Zustand `app` slice          | Single source of truth for boot progress                        |
+| Digest payloads, global headlines, currency rates | React Query                  | Async server data; loading/error/refetch for free               |
+| Sign-in/sign-up/session-refresh logic             | `useSupabaseAuth` hook       | Complex async init; hook writes to auth slice                   |
+| FCM registration logic                            | `useDeviceRegistration` hook | Complex async init; hook writes to device slice                 |
+| MMKV preferences persistence                      | `usePreferences` hook        | Drives hydration + Supabase sync; writes to prefs slice         |
+
+#### The "store writer" pattern
+
+Existing hooks become **store writers**, not state owners. They keep their complex async initialization logic but call `useAppStore.setState(...)` instead of returning values to `App.tsx`. Components read directly from the store.
+
+#### Slice-by-slice impact
+
+| Slice             | Zustand work                                                                                                           | Net props removed                          |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| app/foundation    | `src/store/index.ts`; `app` slice (boot state machine); `nav` slice skeleton                                           | —                                          |
+| app/auth-flow     | `auth` slice; `useSupabaseAuth` writes session to store                                                                | `session`, `authReady` off App.tsx         |
+| app/digest-flow   | `DigestPager`/`DigestPage` read prefs via selectors; delete digestPrefs freeze; React Query replaces module-level Maps | `t`, `theme`, `aes` off DigestPage         |
+| app/settings-flow | `prefs` slice; `usePreferences` writes to store; `setPref` calls `store.setState`                                      | `t`, `setPref`, `flush` off SettingsScreen |
+| app/article       | `article` entry moves to nav slice                                                                                     | `article`, `setArticle` off App.tsx        |
+| app/notifications | Handlers call `store.getState().navigateToDigest()`                                                                    | Removes ref-dance in `useAppNavigation`    |
+
+---
+
+### 8.2 Boot state machine
+
+**Decided: explicit named states, not boolean flags.**
+
+The legacy has 5 independent boolean flags (`fontsLoaded`, `authReady`, `hydrated`, `navReady`, `deviceReady`) all ANDed together. Problems: no distinction between boot stages, no error state, and no path to show a loading indicator or surface a failure.
+
+The rebuild models boot as an explicit state machine in the Zustand `app` slice:
+
+```
+'booting'         ← initial; fonts loading, MMKV reading, nav state restoring
+    ↓
+'auth-check'      ← fonts done, checking Supabase session
+    ↓
+'unauthenticated' ← no session → render LoginScreen
+'prefs-loading'   ← session exists, hydrating preferences + device registration
+    ↓
+'ready'           ← all systems go → render screen from nav slice
+    ↓
+'update-required' ← (future) backend signals a mandatory app update
+'maintenance'     ← (future) backend signals downtime
+```
+
+`App.tsx` switches on `appState` — one clear place to add new boot-time gates. Each transition is a named store action. Debug logs identify exactly which stage the app is stuck in.
+
+This is also the hook point for future backend-driven gates: a `GET /api/status` call during `auth-check` can push the machine into `update-required` or `maintenance` before any user data loads.
+
+---
+
+### 8.3 Navigation: manual routing
+
+**Decided: manual conditional rendering, not React Navigation. Do not revisit for V1.**
+
+App.tsx renders screens via `screen === 'digest' && <DigestPager />` driven by the Zustand `nav` slice.
+
+Reasons:
+
+- The settings overlay requires `DigestPager` and `SettingsScreen` to be simultaneously mounted — React Navigation's stack model works against this.
+- DigestPager's RNGH pan gesture conflicts with a stack navigator's swipe-back gesture; `simultaneousHandlers` config is non-trivial.
+- The app has 4 screens with no deep stacks. React Navigation earns its keep in tab/deep-stack apps; it adds complexity here without benefit.
+
+React Navigation migration is recorded in `todo.md` V2 for post-parity evaluation.
+
+---
+
+### 8.4 Boot UI: native splash hold
+
+**Decided: hold the native Expo splash until `appState === 'ready'`, not the legacy blank JS view.**
+
+The legacy shows a plain `View` with `backgroundColor: theme.bg` while booting — a blank screen that flashes briefly on every cold launch before fonts and auth resolve.
+
+The rebuild uses `expo-splash-screen`:
+
+- `SplashScreen.preventAutoHideAsync()` is called at module level in `index.ts` (before any React renders).
+- The native splash (`assets/splash-icon.png`) stays visible through the entire `booting → auth-check → prefs-loading` sequence.
+- `SplashScreen.hideAsync()` is called once `appState` transitions to `'ready'` or `'unauthenticated'`.
+- The JS-rendered `SplashScreen` component (Pulse mark animation) remains the _post-auth_ screen — same role as in the legacy, but no longer the boot loading gate.
+
+This eliminates the flash-of-blank-screen on cold launch with ~5 lines of code. It is also the standard pattern for Expo apps in production. The `'update-required'` and `'maintenance'` states (§8.2) hide the splash and render their own full-screen UI before the user reaches any app content.
+
+---
+
+## 9. Per-slice discipline
 
 - **One slice = one PR.** No combined slices.
 - **Port behavior first, improve structure second.** Match legacy behavior exactly. Structural improvements (extracting helpers, renaming, splitting files) are allowed in the same PR. Algorithm or behavior changes are not. If you spot a better way, write it in `todo.md` and do it in a `fix/*` branch after parity.
@@ -182,7 +304,7 @@ Each slice kickoff prompt explicitly scopes the legacy regions to port. Example:
 
 ---
 
-## 9. Definition of "caught up"
+## 10. Definition of "caught up"
 
 - Every bullet in `BEHAVIOR.md` is implemented.
 - Every fix in the `todo.md` parity list is incorporated.
