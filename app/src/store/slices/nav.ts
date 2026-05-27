@@ -80,5 +80,6 @@ export const createNavSlice: StateCreator<NavSlice> = (set, get) => ({
       }
       _persistTimer = null;
     }, 700);
+    _persistTimer.unref?.();
   },
 });

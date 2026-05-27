@@ -2,6 +2,7 @@
   "name": "pulse-app",
   "private": true,
   "version": "0.1.0",
+  "main": "index.ts",
   "scripts": {
     "build": "tsc --noEmit",
     "lint": "eslint --ext .ts,.tsx src",
