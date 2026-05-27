@@ -1,7 +1,6 @@
 import {
   signIn,
   signUp,
-  signOut,
   resetPassword,
   updatePassword,
   deleteAccount,
