@@ -6,7 +6,11 @@ function makeSlice(): { slice: PrefsSlice; setSpy: jest.Mock } {
   const setSpy = jest.fn((partial: Partial<PrefsSlice>) => {
     state = { ...state, ...partial };
   });
-  state = createPrefsSlice(setSpy as any, () => state, {} as any);
+  state = createPrefsSlice(
+    setSpy as unknown as Parameters<typeof createPrefsSlice>[0],
+    () => state,
+    {} as unknown as Parameters<typeof createPrefsSlice>[2],
+  );
   return { slice: state, setSpy };
 }
 

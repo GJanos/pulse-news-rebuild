@@ -5,12 +5,11 @@ import { useCurrencyRates } from './useCurrencyRates';
 import { sortedSelectedRegions } from '../data';
 import { useAppStore } from '../store';
 import { config } from '../config';
-import type { DailyDigest, Region } from '../types';
-import type { CurrencyRate } from './useCurrencyRates';
+import type { DailyDigest, Region, Headline } from '../types';
 
 export interface VisibleBucket {
   region: Region;
-  items: import('../types').Headline[];
+  items: Headline[];
 }
 
 /** Exported pure function for unit testing. */

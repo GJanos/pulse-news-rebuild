@@ -8,10 +8,7 @@ import { isoDateAtDayIndex } from '../data';
 import { RegionSection } from './RegionSection';
 import { GlobalSection } from './GlobalSection';
 import { useAppStore } from '../store';
-import { getLogger } from '../logger';
 import type { Headline, Region } from '../types';
-
-const log = getLogger('DigestPage');
 
 export interface DigestPageHandle {
   forceRefresh: () => void;
@@ -90,8 +87,6 @@ export const DigestPage = React.memo(
       forceRefresh,
       openJumpModal,
     ]);
-
-    log.debug(`DigestPage render: dayIndex=${dayIndex} isLoading=${isLoading} error=${error}`);
 
     const renderItem = useCallback(
       ({ item }: { item: ListItem }) => {

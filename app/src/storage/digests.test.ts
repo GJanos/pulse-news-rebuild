@@ -9,6 +9,9 @@ import {
 import { storage } from './mmkv';
 import { getSupabase } from '../supabase/client';
 
+// clearAll is a test-only helper added by the MMKV mock — not part of the real MMKV type
+const testStorage = storage as unknown as { clearAll(): void };
+
 jest.mock('../supabase/client', () => ({ getSupabase: jest.fn() }));
 jest.mock('../logger', () => ({
   getLogger: () => ({ info: jest.fn(), warn: jest.fn(), debug: jest.fn() }),
@@ -25,12 +28,12 @@ function mockSupabase(rows: unknown[] | null, error: unknown = null) {
     in: jest.fn().mockResolvedValue({ data: rows, error }),
     maybeSingle: jest.fn().mockResolvedValue({ data: rows?.[0] ?? null, error }),
   };
-  jest.mocked(getSupabase).mockReturnValue(chain as any);
+  jest.mocked(getSupabase).mockReturnValue(chain as unknown as ReturnType<typeof getSupabase>);
   return chain;
 }
 
 beforeEach(() => {
-  (storage as any).clearAll();
+  testStorage.clearAll();
   jest.clearAllMocks();
 });
 
@@ -52,7 +55,7 @@ describe('loadDailyDigest — today', () => {
       headlines: [{ title: 'old', summary: 's', url: 'u' }],
       cachedAt: new Date(0).toISOString(),
     });
-    (storage as any).set(`pulse.digest.v1::${TODAY}::Hungary`, staleEntry);
+    storage.set(`pulse.digest.v1::${TODAY}::Hungary`, staleEntry);
     mockSupabase([
       { region: 'Hungary', payload: { headlines: [{ title: 'new', summary: 's', url: 'u' }] } },
     ]);
@@ -77,7 +80,7 @@ describe('loadDailyDigest — today', () => {
       headlines: [{ title: 'stale', summary: 's', url: 'u' }],
       cachedAt: new Date(0).toISOString(),
     });
-    (storage as any).set(`pulse.digest.v1::${TODAY}::Hungary`, staleEntry);
+    storage.set(`pulse.digest.v1::${TODAY}::Hungary`, staleEntry);
     mockSupabase([]);
     const result = await loadDailyDigest(TODAY, ['Hungary'], { staleMinutes: 0 });
     expect(result.regions['Hungary']![0]!.title).toBe('stale');
@@ -90,7 +93,7 @@ describe('loadDailyDigest — today', () => {
       headlines: [{ title: 'cached', summary: 's', url: 'u' }],
       cachedAt: new Date(0).toISOString(),
     });
-    (storage as any).set(`pulse.digest.v1::${TODAY}::Hungary`, staleEntry);
+    storage.set(`pulse.digest.v1::${TODAY}::Hungary`, staleEntry);
     mockSupabase(null, { message: 'network error' });
     const result = await loadDailyDigest(TODAY, ['Hungary'], { staleMinutes: 0 });
     expect(result.regions['Hungary']![0]!.title).toBe('cached');
@@ -158,7 +161,7 @@ describe('loadLocalRegionDigest', () => {
   });
 
   it('corrupt JSON — returns null (graceful error handling)', async () => {
-    (storage as any).set(`pulse.digest.v1::${TODAY}::Hungary`, 'not-json{{{');
+    storage.set(`pulse.digest.v1::${TODAY}::Hungary`, 'not-json{{{');
     const result = await loadLocalRegionDigest('Hungary', TODAY);
     expect(result).toBeNull();
   });
@@ -214,7 +217,7 @@ describe('loadDailyDigest — mixed fresh and stale regions', () => {
       headlines: [{ title: 'old-ua', summary: 's', url: 'u' }],
       cachedAt: new Date(0).toISOString(),
     });
-    (storage as any).set(`pulse.digest.v1::${TODAY}::Ukraine`, staleEntry);
+    storage.set(`pulse.digest.v1::${TODAY}::Ukraine`, staleEntry);
     const chain = mockSupabase([
       { region: 'Ukraine', payload: { headlines: [{ title: 'new-ua', summary: 's', url: 'u' }] } },
     ]);
@@ -234,7 +237,7 @@ describe('trimLocalCache — additional', () => {
 
   it('global cache keys are not affected by trim', () => {
     const oldDate = '2000-01-01';
-    (storage as any).set(
+    storage.set(
       `pulse.global.v1::${oldDate}`,
       JSON.stringify({ date: oldDate, headlines: [], cachedAt: new Date(0).toISOString() }),
     );
@@ -278,7 +281,7 @@ describe('loadGlobalHeadlines — past date', () => {
       headlines: [{ title: 'old-global', summary: 's', url: 'u', region: 'H' }],
       cachedAt: new Date(0).toISOString(),
     });
-    (storage as any).set(`pulse.global.v1::${PAST}`, entry);
+    storage.set(`pulse.global.v1::${PAST}`, entry);
     const chain = mockSupabase([]);
     const result = await loadGlobalHeadlines(PAST);
     expect(result[0]!.title).toBe('old-global');
@@ -318,7 +321,7 @@ describe('loadGlobalHeadlines', () => {
       headlines: [{ title: 'cached', summary: 's', url: 'u', region: 'H' }],
       cachedAt: new Date().toISOString(),
     });
-    (storage as any).set(`pulse.global.v1::${TODAY}`, entry);
+    storage.set(`pulse.global.v1::${TODAY}`, entry);
     const chain = mockSupabase([]);
     const result = await loadGlobalHeadlines(TODAY, { staleMinutes: 60 });
     expect(result[0]!.title).toBe('cached');

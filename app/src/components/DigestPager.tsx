@@ -113,8 +113,7 @@ export default React.memo(function DigestPager({
     }
     cancelAnimation(tx);
     tx.value = withSpring(txFor(dayIndex, maxDayIndex, W), SPRING);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dayIndex, W, setActivePage]);
+  }, [dayIndex, W, setActivePage]); // tx and maxDayIndex are stable shared values; W changes trigger spring
 
   const pan = Gesture.Pan()
     .activeOffsetX([-12, 12])

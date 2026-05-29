@@ -1,14 +1,13 @@
 import { globalQueryFn } from './useGlobalHeadlines';
 import { loadGlobalHeadlines } from '../storage/digests';
 import { TODAY_ISO } from '../data';
+import type { GlobalHeadline } from '../types';
 
 jest.mock('../storage/digests', () => ({ loadGlobalHeadlines: jest.fn() }));
 jest.mock('../logger', () => ({ getLogger: () => ({ info: jest.fn(), warn: jest.fn() }) }));
 
 const PAST = '2020-01-01';
-const SAMPLE: import('../types').GlobalHeadline[] = [
-  { title: 'G', summary: 'S', url: 'u', region: 'Hungary' },
-];
+const SAMPLE: GlobalHeadline[] = [{ title: 'G', summary: 'S', url: 'u', region: 'Hungary' }];
 
 beforeEach(() => jest.clearAllMocks());
 
