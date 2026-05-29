@@ -8,6 +8,7 @@ import type {
 } from '../types';
 import { getSupabase } from '../supabase/client';
 import { getLogger } from '../logger';
+import { getTodayISO } from '../data';
 
 const log = getLogger('digests');
 
@@ -123,10 +124,6 @@ export async function fetchRemoteDigestsForDate(
   });
 }
 
-function writeThrough(region: string, date: string, headlines: Headline[]): void {
-  saveLocalRegionDigest(region, date, headlines);
-}
-
 async function fetchAndCache(
   date: string,
   regions: string[],
@@ -135,7 +132,7 @@ async function fetchAndCache(
   const remote = await fetchRemoteDigestsForDate(date, regions);
   for (const row of remote) {
     out[row.region] = row.headlines;
-    writeThrough(row.region, date, row.headlines);
+    saveLocalRegionDigest(row.region, date, row.headlines);
   }
   return remote;
 }
@@ -147,7 +144,7 @@ export async function loadDailyDigest(
 ): Promise<DailyDigest> {
   log.info(`loading digest ${date} for ${regions.length} region(s)`);
   const out: Record<string, Headline[]> = {};
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getTodayISO();
 
   if (date === today) {
     const staleMs = (options?.staleMinutes ?? 60) * 60 * 1000;
@@ -214,7 +211,7 @@ export async function loadGlobalHeadlines(
   options?: { staleMinutes?: number },
 ): Promise<GlobalHeadline[]> {
   log.info(`loading global headlines for ${date}`);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getTodayISO();
   const staleMs = date === today ? (options?.staleMinutes ?? 60) * 60 * 1000 : 0;
   const cached = loadLocalGlobalDigest(date, staleMs);
   if (cached) return cached;

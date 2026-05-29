@@ -74,10 +74,10 @@ export function useDigestPageData(date: string, isToday: boolean) {
     baseCurrency,
   );
 
-  const forceRefresh = useCallback(() => {
-    forceRefreshDigest();
+  const forceRefresh = useCallback((): Promise<void> => {
     forceRefreshGlobal();
     forceRefreshCurrency();
+    return forceRefreshDigest();
   }, [forceRefreshDigest, forceRefreshGlobal, forceRefreshCurrency]);
 
   return {

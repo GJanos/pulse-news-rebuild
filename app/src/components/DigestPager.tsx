@@ -113,7 +113,7 @@ export default React.memo(function DigestPager({
     }
     cancelAnimation(tx);
     tx.value = withSpring(txFor(dayIndex, maxDayIndex, W), SPRING);
-  }, [dayIndex, W, setActivePage]); // tx and maxDayIndex are stable shared values; W changes trigger spring
+  }, [dayIndex, maxDayIndex, W, setActivePage]); // tx is a Reanimated shared value and excluded from deps
 
   const pan = Gesture.Pan()
     .activeOffsetX([-12, 12])

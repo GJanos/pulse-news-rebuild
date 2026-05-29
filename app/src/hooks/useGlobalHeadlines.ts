@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { loadGlobalHeadlines } from '../storage/digests';
-import { TODAY_ISO } from '../data';
+import { getTodayISO } from '../data';
 import { getLogger } from '../logger';
 import type { GlobalHeadline } from '../types';
 
@@ -39,7 +39,7 @@ export function useGlobalHeadlines(
   const query = useQuery<GlobalHeadline[]>({
     queryKey: ['global', date],
     enabled,
-    staleTime: date === TODAY_ISO ? staleMinutes * 60_000 : Infinity,
+    staleTime: date === getTodayISO() ? staleMinutes * 60_000 : Infinity,
     gcTime: 24 * 60 * 60_000,
     queryFn: async () => {
       const forced = forcedRef.current;
@@ -49,7 +49,7 @@ export function useGlobalHeadlines(
   });
 
   const forceRefresh = useCallback(() => {
-    if (date !== TODAY_ISO) return; // no-op on past dates (matches legacy)
+    if (date !== getTodayISO()) return; // no-op on past dates (matches legacy)
     forcedRef.current = true;
     void query.refetch();
   }, [date, query]);

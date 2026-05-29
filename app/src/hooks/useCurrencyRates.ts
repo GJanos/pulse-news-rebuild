@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { isoDateAtDayIndex } from '../data';
 import { getLogger } from '../logger';
 
 const log = getLogger('useCurrencyRates');
@@ -11,6 +12,8 @@ export interface CurrencyRate {
   rate: number;
   changePercent: number | null;
 }
+
+const EMPTY_RATES: Record<string, CurrencyRate> = {};
 
 function currencyUrls(base: string, date: 'latest' | string): [string, string] {
   const key = base.toLowerCase();
@@ -48,7 +51,7 @@ export async function buildCurrencyRates(
   codes: string[],
   baseCurrency: string,
 ): Promise<Record<string, CurrencyRate>> {
-  const yesterdayDate = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+  const yesterdayDate = isoDateAtDayIndex(1);
   log.info(`fetching ${baseCurrency} rates for [${codes.join(', ')}]`);
   const [today, yesterday] = await Promise.all([
     fetchRates(baseCurrency, 'latest'),
@@ -105,12 +108,13 @@ export function useCurrencyRates(
   });
 
   const forceRefresh = useCallback(() => {
+    if (!enabled) return;
     forcedRef.current = true;
     void query.refetch();
-  }, [query]);
+  }, [enabled, query]);
 
   return {
-    rates: query.data ?? {},
+    rates: query.data ?? EMPTY_RATES,
     forceRefresh,
   };
 }

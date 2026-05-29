@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useMemo, useState } from 'react';
+import React, { useCallback, useRef, useMemo, useState } from 'react';
 import { View, Text, Pressable, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { THEMES, AESTHETICS, font } from '../themes';
 import { useDigestPageData } from '../hooks/useDigestPageData';
@@ -51,27 +51,28 @@ export const DigestPage = React.memo(
     const [refreshing, setRefreshing] = useState(false);
     const onRefresh = useCallback(() => {
       setRefreshing(true);
-      forceRefresh();
+      void forceRefresh().finally(() => setRefreshing(false));
     }, [forceRefresh]);
-    useEffect(() => {
-      if (digest) setRefreshing(false);
-    }, [digest]);
 
     const [jumpOpen, setJumpOpen] = useState(false);
     const openJumpModal = useCallback(() => setJumpOpen(true), []);
 
+    const onScrollToIndexFailed = useCallback(
+      (info: { index: number; highestMeasuredFrameIndex: number; averageItemLength: number }) => {
+        flatRef.current?.scrollToOffset({
+          offset: info.averageItemLength * info.index,
+          animated: false,
+        });
+        setTimeout(() => {
+          flatRef.current?.scrollToIndex({ index: info.index, animated: true });
+        }, 100);
+      },
+      [],
+    );
+
     const scrollToIndexSafe = useCallback((index: number) => {
       if (index < 0) return;
-      let attempts = 0;
-      const tryScroll = () => {
-        attempts += 1;
-        try {
-          flatRef.current?.scrollToIndex({ index, animated: true });
-        } catch {
-          if (attempts < 4) setTimeout(tryScroll, 80 * attempts);
-        }
-      };
-      tryScroll();
+      flatRef.current?.scrollToIndex({ index, animated: true });
     }, []);
 
     const jumpTo = useCallback(
@@ -181,6 +182,7 @@ export const DigestPage = React.memo(
             showsVerticalScrollIndicator={false}
             refreshing={refreshing}
             onRefresh={active && isToday ? onRefresh : undefined}
+            onScrollToIndexFailed={onScrollToIndexFailed}
             renderItem={renderItem}
             removeClippedSubviews
             maxToRenderPerBatch={8}
