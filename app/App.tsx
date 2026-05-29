@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, BackHandler } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -32,15 +32,16 @@ import { ErrorBoundary } from './src/components/ErrorBoundary';
 import SplashScreenComponent from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
-import DigestFlowStub from './src/screens/stubs/DigestFlowStub';
+import DigestPager from './src/components/DigestPager';
 import SettingsStub from './src/screens/stubs/SettingsStub';
 import UpdateRequiredScreen from './src/screens/stubs/UpdateRequiredScreen';
 import MaintenanceScreen from './src/screens/stubs/MaintenanceScreen';
 import type { AppState, ScreenId } from './src/types';
 import type { Theme } from './src/themes';
 import type { AuthActions } from './src/hooks/useSupabaseAuth';
+import type { DigestPageHandle } from './src/components/DigestPage';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 const defaultAes = AESTHETICS.editorial;
 
 export default function App(): React.ReactElement {
@@ -64,8 +65,8 @@ export default function App(): React.ReactElement {
   const appState = useAppStore((s) => s.appState);
   const screen = useAppStore((s) => s.screen);
   const isPasswordRecovery = useAppStore((s) => s.isPasswordRecovery);
-  const themeId = useAppStore((s) => (s as { prefs?: { theme: string } }).prefs?.theme ?? 'light');
-  const theme = THEMES[themeId as keyof typeof THEMES] ?? THEMES.light;
+  const themeId = useAppStore((s) => s.prefs.theme);
+  const theme = THEMES[themeId] ?? THEMES.light;
 
   const actions = useAuthInit();
 
@@ -110,6 +111,28 @@ function RootScreens({
   isPasswordRecovery,
   actions,
 }: RootScreensProps): React.ReactElement {
+  const dayIndex = useAppStore((s) => s.dayIndex);
+  const setDayIndex = useAppStore((s) => s.setDayIndex);
+  const article = useAppStore((s) => s.article);
+  const setArticle = useAppStore((s) => s.setArticle);
+  const setScreen = useAppStore((s) => s.setScreen);
+  const activePageRef = useRef<DigestPageHandle | null>(null);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (article) {
+        setArticle(null);
+        return true;
+      }
+      if (screen === 'settings') {
+        setScreen('digest');
+        return true;
+      }
+      return false;
+    });
+    return () => sub.remove();
+  }, [article, screen, setArticle, setScreen]);
+
   if (isPasswordRecovery) {
     return (
       <ResetPasswordScreen
@@ -120,9 +143,7 @@ function RootScreens({
     );
   }
 
-  if (appState === 'booting') {
-    return <View style={[s.root, { backgroundColor: theme.bg }]} />;
-  }
+  if (appState === 'booting') return <View style={[s.root, { backgroundColor: theme.bg }]} />;
 
   if (appState === 'auth-check' || appState === 'prefs-loading') {
     return <SplashScreenComponent theme={theme} aes={defaultAes} />;
@@ -149,7 +170,15 @@ function RootScreens({
       edges={['top', 'bottom', 'left', 'right']}
       style={[s.root, { backgroundColor: theme.bg }]}
     >
-      {(screen === 'splash' || screen === 'digest') && <DigestFlowStub />}
+      {(screen === 'digest' || screen === 'settings') && (
+        <DigestPager
+          dayIndex={dayIndex}
+          setDayIndex={setDayIndex}
+          onOpenSettings={() => setScreen('settings')}
+          onOpenArticle={(h, r) => setArticle({ h, r })}
+          activePageRef={activePageRef}
+        />
+      )}
       {screen === 'settings' && <SettingsStub />}
     </SafeAreaView>
   );
