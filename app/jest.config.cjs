@@ -13,5 +13,8 @@ module.exports = {
     '^react-native$': '<rootDir>/__mocks__/react-native.ts',
     '^react-native-mmkv$': '<rootDir>/__mocks__/react-native-mmkv.ts',
     '^@supabase/supabase-js$': '<rootDir>/__mocks__/@supabase/supabase-js.ts',
+    '^react-native-reanimated$': '<rootDir>/__mocks__/react-native-reanimated.ts',
+    '^react-native-gesture-handler$': '<rootDir>/__mocks__/react-native-gesture-handler.ts',
+    '^react-native-pressable-scale$': '<rootDir>/__mocks__/react-native-pressable-scale.ts',
   },
 };
