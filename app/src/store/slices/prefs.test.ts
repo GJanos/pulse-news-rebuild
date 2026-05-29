@@ -1,34 +1,55 @@
 import { createPrefsSlice, DEFAULT_PREFERENCES } from './prefs';
 import type { PrefsSlice } from './prefs';
 
-function makeSlice(): PrefsSlice {
+function makeSlice(): { slice: PrefsSlice; setSpy: jest.Mock } {
   let state: PrefsSlice = {} as PrefsSlice;
-  const set = (partial: Partial<PrefsSlice>) => {
+  const setSpy = jest.fn((partial: Partial<PrefsSlice>) => {
     state = { ...state, ...partial };
-  };
-  state = createPrefsSlice(set as any, () => state, {} as any);
-  return state;
+  });
+  state = createPrefsSlice(setSpy as any, () => state, {} as any);
+  return { slice: state, setSpy };
 }
 
 describe('PrefsSlice', () => {
   it('initialises with DEFAULT_PREFERENCES', () => {
-    const slice = makeSlice();
+    const { slice } = makeSlice();
     expect(slice.prefs).toEqual(DEFAULT_PREFERENCES);
   });
 
-  it('setPrefs replaces prefs entirely', () => {
-    const slice = makeSlice();
+  it('setPrefs calls set with the new prefs object', () => {
+    const { slice, setSpy } = makeSlice();
     const updated = { ...DEFAULT_PREFERENCES, historyDays: 14 };
     slice.setPrefs(updated);
-    // state is updated via the set callback (tested via the store integration below)
-    expect(DEFAULT_PREFERENCES.historyDays).toBe(7); // DEFAULT is immutable
+    expect(setSpy).toHaveBeenCalledWith({ prefs: updated });
   });
 
-  it('DEFAULT_PREFERENCES has showGlobalHeadlines true', () => {
+  it('setPrefs does not mutate DEFAULT_PREFERENCES', () => {
+    const { slice } = makeSlice();
+    slice.setPrefs({ ...DEFAULT_PREFERENCES, historyDays: 14 });
+    expect(DEFAULT_PREFERENCES.historyDays).toBe(7);
+  });
+
+  it('DEFAULT_PREFERENCES.showGlobalHeadlines is true', () => {
     expect(DEFAULT_PREFERENCES.showGlobalHeadlines).toBe(true);
   });
 
-  it('DEFAULT_PREFERENCES has 5 default selected regions', () => {
+  it('DEFAULT_PREFERENCES has 5 selected regions', () => {
     expect(DEFAULT_PREFERENCES.selectedRegions).toHaveLength(5);
+  });
+
+  it('DEFAULT_PREFERENCES theme is light', () => {
+    expect(DEFAULT_PREFERENCES.theme).toBe('light');
+  });
+
+  it('DEFAULT_PREFERENCES aesthetic is editorial', () => {
+    expect(DEFAULT_PREFERENCES.aesthetic).toBe('editorial');
+  });
+
+  it('DEFAULT_PREFERENCES baseCurrency is USD', () => {
+    expect(DEFAULT_PREFERENCES.baseCurrency).toBe('USD');
+  });
+
+  it('DEFAULT_PREFERENCES headlineCount is 5', () => {
+    expect(DEFAULT_PREFERENCES.headlineCount).toBe(5);
   });
 });
