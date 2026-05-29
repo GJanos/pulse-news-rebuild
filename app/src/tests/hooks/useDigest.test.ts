@@ -1,9 +1,9 @@
-import { digestQueryFn } from './useDigest';
-import { loadDailyDigest } from '../storage/digests';
-import { TODAY_ISO } from '../data';
+import { digestQueryFn } from '../../hooks/useDigest';
+import { loadDailyDigest } from '../../storage/digests';
+import { TODAY_ISO } from '../../data';
 
-jest.mock('../storage/digests', () => ({ loadDailyDigest: jest.fn() }));
-jest.mock('../logger', () => ({ getLogger: () => ({ info: jest.fn(), warn: jest.fn() }) }));
+jest.mock('../../storage/digests', () => ({ loadDailyDigest: jest.fn() }));
+jest.mock('../../logger', () => ({ getLogger: () => ({ info: jest.fn(), warn: jest.fn() }) }));
 
 const REGIONS = ['Hungary', 'Ukraine'];
 const PAST = '2020-01-01';

@@ -5,15 +5,15 @@ import {
   saveLocalRegionDigest,
   trimLocalCache,
   fetchRemoteDigestsForDate,
-} from './digests';
-import { storage } from './mmkv';
-import { getSupabase } from '../supabase/client';
+} from '../../storage/digests';
+import { storage } from '../../storage/mmkv';
+import { getSupabase } from '../../supabase/client';
 
 // clearAll is a test-only helper added by the MMKV mock — not part of the real MMKV type
 const testStorage = storage as unknown as { clearAll(): void };
 
-jest.mock('../supabase/client', () => ({ getSupabase: jest.fn() }));
-jest.mock('../logger', () => ({
+jest.mock('../../supabase/client', () => ({ getSupabase: jest.fn() }));
+jest.mock('../../logger', () => ({
   getLogger: () => ({ info: jest.fn(), warn: jest.fn(), debug: jest.fn() }),
 }));
 

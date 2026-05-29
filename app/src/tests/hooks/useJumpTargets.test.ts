@@ -1,6 +1,6 @@
-import { buildJumpIndex } from './useJumpTargets';
-import type { VisibleBucket } from './useDigestPageData';
-import type { GlobalHeadline, Region } from '../types';
+import { buildJumpIndex } from '../../hooks/useJumpTargets';
+import type { VisibleBucket } from '../../hooks/useDigestPageData';
+import type { GlobalHeadline, Region } from '../../types';
 
 // ── helpers ──────────────────────────────────────────────────────────
 
