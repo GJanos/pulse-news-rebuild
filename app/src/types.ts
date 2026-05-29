@@ -21,6 +21,20 @@ export interface DailyDigest {
   regions: Record<string, Headline[]>;
 }
 
+export interface GlobalHeadline {
+  title: string;
+  summary: string;
+  detail?: string;
+  url: string;
+  /** The source region name (e.g. "Hungary"). */
+  region: string;
+  sourceName?: string;
+}
+
+export interface GlobalDigestPayload {
+  headlines: GlobalHeadline[];
+}
+
 export type ThemeId = 'light' | 'sepia' | 'dark';
 export type AestheticId = 'editorial' | 'clinical' | 'brutalist';
 export type ScreenId = 'splash' | 'digest' | 'settings' | 'login';
