@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { createNavSlice, NAV_KEY, NAV_TTL_MS, type NavSlice } from './nav';
+import { createNavSlice, NAV_KEY, NAV_TTL_MS, type NavSlice } from '../../../store/slices/nav';
 
-jest.mock('../../storage/mmkv', () => ({
+jest.mock('../../../storage/mmkv', () => ({
   storage: {
     getString: jest.fn<string | undefined, [string]>(),
     set: jest.fn<void, [string, string]>(),
@@ -11,7 +11,7 @@ jest.mock('../../storage/mmkv', () => ({
 }));
 
 const mockStorage = (
-  jest.requireMock('../../storage/mmkv') as {
+  jest.requireMock('../../../storage/mmkv') as {
     storage: {
       getString: jest.Mock;
       set: jest.Mock;

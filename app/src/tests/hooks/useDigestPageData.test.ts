@@ -1,7 +1,7 @@
-import { buildVisibleBuckets } from './useDigestPageData';
-import type { DailyDigest, Headline } from '../types';
+import { buildVisibleBuckets } from '../../hooks/useDigestPageData';
+import type { DailyDigest, Headline } from '../../types';
 
-jest.mock('../data', () => ({
+jest.mock('../../data', () => ({
   sortedSelectedRegions: (regions: string[]) =>
     regions.map((r) => ({
       region: r,

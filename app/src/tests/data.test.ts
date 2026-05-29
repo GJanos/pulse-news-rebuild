@@ -1,4 +1,4 @@
-import { isoDateAtDayIndex, formatLongDate, sortedSelectedRegions, getTodayISO } from './data';
+import { isoDateAtDayIndex, formatLongDate, sortedSelectedRegions, getTodayISO } from '../data';
 
 describe('isoDateAtDayIndex', () => {
   it('index 0 returns today in YYYY-MM-DD format', () => {

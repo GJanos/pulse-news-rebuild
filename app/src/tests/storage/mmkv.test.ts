@@ -1,4 +1,4 @@
-import { supabaseStorage, storage } from './mmkv';
+import { supabaseStorage, storage } from '../../storage/mmkv';
 
 beforeEach(() => {
   (storage as unknown as { clearAll(): void }).clearAll();

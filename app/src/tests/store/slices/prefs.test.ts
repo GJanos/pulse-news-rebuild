@@ -1,5 +1,5 @@
-import { createPrefsSlice, DEFAULT_PREFERENCES } from './prefs';
-import type { PrefsSlice } from './prefs';
+import { createPrefsSlice, DEFAULT_PREFERENCES } from '../../../store/slices/prefs';
+import type { PrefsSlice } from '../../../store/slices/prefs';
 
 function makeSlice(): { slice: PrefsSlice; setSpy: jest.Mock } {
   let state: PrefsSlice = {} as PrefsSlice;

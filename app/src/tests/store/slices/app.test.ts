@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { createAppSlice, type AppSlice } from './app';
+import { createAppSlice, type AppSlice } from '../../../store/slices/app';
 
 function makeStore() {
   return create<AppSlice>()((...a) => ({ ...createAppSlice(...a) }));

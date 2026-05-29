@@ -1,6 +1,6 @@
-import { buildCurrencyRates, fetchRates, formatRate } from './useCurrencyRates';
+import { buildCurrencyRates, fetchRates, formatRate } from '../../hooks/useCurrencyRates';
 
-jest.mock('../logger', () => ({
+jest.mock('../../logger', () => ({
   getLogger: () => ({ info: jest.fn(), warn: jest.fn(), debug: jest.fn() }),
 }));
 

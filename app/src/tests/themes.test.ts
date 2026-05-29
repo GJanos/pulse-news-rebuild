@@ -1,4 +1,4 @@
-import { font, AESTHETICS, THEMES } from './themes';
+import { font, AESTHETICS, THEMES } from '../themes';
 
 describe('font()', () => {
   it('editorial title → SourceSerif4_600SemiBold', () => {
