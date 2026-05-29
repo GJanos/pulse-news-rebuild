@@ -1,6 +1,8 @@
+import { View } from 'react-native';
+
 const Reanimated = {
   default: {
-    View: require('react-native').View,
+    View,
     createAnimatedComponent: (c: unknown) => c,
   },
   useSharedValue: (v: unknown) => ({ value: v }),

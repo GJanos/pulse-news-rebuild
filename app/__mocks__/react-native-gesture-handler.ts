@@ -1,6 +1,7 @@
-import React from 'react';
+import type React from 'react';
+import { View } from 'react-native';
 
-export const GestureHandlerRootView = require('react-native').View;
+export const GestureHandlerRootView = View;
 export const GestureDetector = ({ children }: { children: React.ReactNode }) => children;
 export const Gesture = {
   Pan: () => ({
