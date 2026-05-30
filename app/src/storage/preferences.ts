@@ -54,6 +54,7 @@ export async function pullRemotePreferences(userId: string): Promise<UserPrefere
   const supabase = getSupabase();
   if (!supabase) return null;
 
+  // TODO: remove cast when supabase types include user_preferences table
   const { data, error } = await (supabase as any)
     .from('user_preferences')
     .select('preferences, updated_at')
@@ -75,6 +76,7 @@ export async function pushRemotePreferences(userId: string, prefs: UserPreferenc
   const supabase = getSupabase();
   if (!supabase) return;
 
+  // TODO: remove cast when supabase types include user_preferences table
   const { error } = await (supabase as any)
     .from('user_preferences')
     .upsert(
@@ -108,13 +110,7 @@ export async function syncPreferences(userId: string): Promise<UserPreferences> 
   if (winner !== local) {
     await saveLocalPreferences(winner);
     log.info('sync: remote was newer — local cache updated');
-  }
-  if (
-    winner === local &&
-    local &&
-    remote &&
-    new Date(local.updatedAt) > new Date(remote.updatedAt)
-  ) {
+  } else if (local && remote && new Date(local.updatedAt) > new Date(remote.updatedAt)) {
     pushRemotePreferences(userId, local).catch((e) => log.warn(`remote push failed: ${String(e)}`));
     log.info('sync: local was newer — remote push queued');
   }
