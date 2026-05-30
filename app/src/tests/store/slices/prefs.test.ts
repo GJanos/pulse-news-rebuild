@@ -24,6 +24,7 @@ function makeSlice(): { slice: PrefsSlice; setSpy: jest.Mock } {
       if (prop === Symbol.toStringTag || prop === 'constructor') {
         return undefined;
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return (state as any)[prop];
     },
   });

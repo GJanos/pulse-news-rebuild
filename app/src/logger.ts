@@ -20,6 +20,7 @@ function ts(): string {
 function makeMethod(level: Level, tag: string): (msg: string) => void {
   if (LEVELS[level] < minLevel) return noop;
   const prefix = `${level.toUpperCase().padEnd(5)} ${tag}`;
+  // eslint-disable-next-line no-console
   return (msg: string) => console.log(`${ts()} ${prefix} ${msg}`);
 }
 

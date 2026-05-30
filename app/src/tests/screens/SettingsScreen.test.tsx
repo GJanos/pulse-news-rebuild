@@ -26,6 +26,7 @@ jest.mock('../../storage/preferences', () => ({
 
 // RegionPicker has its own tests; mock it out to keep SettingsScreen tests focused
 jest.mock('../../components/RegionPicker', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { View } = require('react-native');
   return {
     __esModule: true,
@@ -43,6 +44,7 @@ beforeEach(() => {
   useAppStore.setState({
     prefs: DEFAULT_PREFERENCES,
     prefsMutationCount: 0,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     session: { user: { id: 'u1', email: 'test@pulse.com' } } as any,
     notificationsEnabled: true,
   });
@@ -70,6 +72,7 @@ describe('SettingsScreen', () => {
   it('calls onDeleteAccount after confirming the alert', async () => {
     const onDeleteAccount = jest.fn().mockResolvedValue(null);
     jest.spyOn(Alert, 'alert').mockImplementation((_title, _msg, buttons) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const deleteBtn = buttons?.find((b: any) => b.style === 'destructive');
       deleteBtn?.onPress?.();
     });
@@ -81,6 +84,7 @@ describe('SettingsScreen', () => {
   it('does NOT call onDeleteAccount when alert is cancelled', () => {
     const onDeleteAccount = jest.fn();
     jest.spyOn(Alert, 'alert').mockImplementation((_title, _msg, buttons) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const cancelBtn = buttons?.find((b: any) => b.style === 'cancel');
       cancelBtn?.onPress?.();
     });
@@ -93,6 +97,7 @@ describe('SettingsScreen', () => {
     const alertSpy = jest.spyOn(Alert, 'alert');
     const onDeleteAccount = jest.fn().mockResolvedValue('Something went wrong');
     jest.spyOn(Alert, 'alert').mockImplementationOnce((_title, _msg, buttons) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const deleteBtn = buttons?.find((b: any) => b.style === 'destructive');
       deleteBtn?.onPress?.();
     });

@@ -69,7 +69,7 @@ export function usePreferences(): void {
     return () => {
       cancelled = true;
     };
-  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   // Dirty tracking + debounced flush — only reacts to user setPref calls,
   // not to setPrefs (hydration/sync), because mutationCount is only incremented by setPref.

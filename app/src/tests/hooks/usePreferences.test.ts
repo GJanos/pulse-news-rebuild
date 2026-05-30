@@ -7,7 +7,6 @@ import {
   loadLocalPreferences,
   saveLocalPreferences,
   syncPreferences,
-  pushRemotePreferences,
 } from '../../storage/preferences';
 
 jest.mock('../../storage/preferences', () => ({
@@ -85,6 +84,7 @@ describe('hydration', () => {
 
   it('calls syncPreferences when userId is present', async () => {
     useAppStore.setState({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       session: { user: { id: 'user-abc', email: 'test@test.com' } } as any,
     });
     const synced = { ...DEFAULT_PREFERENCES, theme: 'sepia' as const };
@@ -102,6 +102,7 @@ describe('hydration', () => {
       }),
     );
     useAppStore.setState({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       session: { user: { id: 'user-xyz', email: 'x@test.com' } } as any,
     });
     renderHook(() => usePreferences());
