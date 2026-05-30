@@ -21,6 +21,14 @@ export const FlatList = 'FlatList';
 export const StyleSheet = {
   create: (styles: Record<string, unknown>) => styles,
   flatten: (style: unknown) => style,
+  hairlineWidth: 1,
+};
+
+export const LayoutAnimation = {
+  configureNext: jest.fn(),
+  create: jest.fn(),
+  Types: { spring: 'spring', linear: 'linear', easeInEaseOut: 'easeInEaseOut' },
+  Properties: { opacity: 'opacity', scaleXY: 'scaleXY' },
 };
 export const Platform = {
   OS: 'android',
