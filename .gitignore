@@ -15,3 +15,6 @@ Thumbs.db
 cron/logs/
 
 .superpowers/
+
+# Claude Code local settings
+.claude/settings.local.json
