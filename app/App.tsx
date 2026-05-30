@@ -34,7 +34,7 @@ import SplashScreenComponent from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import DigestPager from './src/components/DigestPager';
-import SettingsStub from './src/screens/stubs/SettingsStub';
+import SettingsScreen from './src/screens/SettingsScreen';
 import UpdateRequiredScreen from './src/screens/stubs/UpdateRequiredScreen';
 import MaintenanceScreen from './src/screens/stubs/MaintenanceScreen';
 import type { AppState, ScreenId } from './src/types';
@@ -181,7 +181,14 @@ function RootScreens({
           activePageRef={activePageRef}
         />
       )}
-      {screen === 'settings' && <SettingsStub />}
+      {screen === 'settings' && (
+        <SettingsScreen
+          onLogout={() => {
+            void actions.signOut();
+          }}
+          onDeleteAccount={actions.deleteAccount}
+        />
+      )}
     </SafeAreaView>
   );
 }
