@@ -55,7 +55,7 @@ export default function RegionPicker(): React.ReactElement {
     )
       return;
     setOrderedRegions(nextOrder);
-  }, [selectedRegions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedRegions]); // intentionally omitting orderedRegions to avoid infinite loop
 
   const commit = (nextSelected: Set<string>, order: Region[] = orderedRegions): void => {
     setPref(

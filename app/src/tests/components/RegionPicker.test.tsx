@@ -26,6 +26,7 @@ jest.mock('../../storage/preferences', () => ({
 /** Inject a fresh jest.fn() as setPref into the store and return it. */
 function spySetPref(): jest.Mock {
   const mock = jest.fn();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useAppStore.setState({ setPref: mock } as any);
   return mock;
 }
