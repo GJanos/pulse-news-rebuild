@@ -94,6 +94,33 @@ describe('hydration', () => {
     expect(mockSync).toHaveBeenCalledWith('user-abc');
   });
 
+  it('does not overwrite in-flight user edits with sync result', async () => {
+    let resolveSync: (v: typeof DEFAULT_PREFERENCES) => void;
+    mockSync.mockReturnValue(
+      new Promise((res) => {
+        resolveSync = res;
+      }),
+    );
+    useAppStore.setState({
+      session: { user: { id: 'user-xyz', email: 'x@test.com' } } as any,
+    });
+    renderHook(() => usePreferences());
+    await waitFor(() => expect(useAppStore.getState().appState).toBe('ready'));
+
+    // User edits a pref while sync is in-flight
+    act(() => {
+      useAppStore.getState().setPref('theme', 'dark');
+    });
+
+    // Sync resolves with the old value
+    await act(async () => {
+      resolveSync!({ ...DEFAULT_PREFERENCES, theme: 'light' });
+    });
+
+    // User's dark theme should be preserved
+    expect(useAppStore.getState().prefs.theme).toBe('dark');
+  });
+
   it('does not update store after unmount (cancelled)', async () => {
     let resolveLoad: (v: null) => void;
     mockLoad.mockReturnValue(
@@ -165,6 +192,8 @@ describe('AppState flush', () => {
       return { remove: jest.fn() };
     });
   });
+
+  afterEach(() => jest.restoreAllMocks());
 
   it('flushes immediately on background when dirty', async () => {
     renderHook(() => usePreferences());

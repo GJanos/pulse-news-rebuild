@@ -28,6 +28,7 @@ export function usePreferences(): void {
   const userIdRef = useRef(userId);
   userIdRef.current = userId;
   const flushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevScreenRef = useRef(screen);
 
   const flush = useCallback((): void => {
     if (!dirtyRef.current) return;
@@ -58,7 +59,7 @@ export function usePreferences(): void {
       if (userId) {
         log.debug('starting background sync');
         const winner = await syncPreferences(userId);
-        if (!cancelled) {
+        if (!cancelled && !dirtyRef.current) {
           setPrefs(winner);
           log.info('remote sync complete');
         }
@@ -101,7 +102,8 @@ export function usePreferences(): void {
 
   // Flush when navigating away from settings screen
   useEffect(() => {
-    if (screen !== 'settings') flush();
+    if (prevScreenRef.current === 'settings' && screen !== 'settings') flush();
+    prevScreenRef.current = screen;
   }, [screen, flush]);
 
   // Flush when app goes to background or inactive
