@@ -16,7 +16,7 @@ export function useSlideIn(onDismiss: () => void): {
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const dismiss = useCallback(() => {
     Animated.timing(slideAnim, {
@@ -25,7 +25,7 @@ export function useSlideIn(onDismiss: () => void): {
       easing: Easing.in(Easing.cubic),
       useNativeDriver: true,
     }).start(() => onDismiss());
-  }, [onDismiss]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [onDismiss]);
 
   return { slideAnim, dismiss };
 }
