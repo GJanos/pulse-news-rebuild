@@ -28,6 +28,7 @@ import { THEMES, AESTHETICS } from './src/themes';
 import { useAppStore } from './src/store';
 import { useAppInit } from './src/hooks/useAppInit';
 import { useAuthInit } from './src/hooks/useAuthInit';
+import { usePreferences } from './src/hooks/usePreferences';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import SplashScreenComponent from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -69,6 +70,7 @@ export default function App(): React.ReactElement {
   const theme = THEMES[themeId] ?? THEMES.light;
 
   const actions = useAuthInit();
+  usePreferences();
 
   useEffect(() => {
     if (appState !== 'booting') {
