@@ -4,6 +4,13 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        jsx: 'react',
+      },
+    },
+  },
   roots: ['<rootDir>/src'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   passWithNoTests: true,
@@ -16,5 +23,6 @@ module.exports = {
     '^react-native-reanimated$': '<rootDir>/__mocks__/react-native-reanimated.ts',
     '^react-native-gesture-handler$': '<rootDir>/__mocks__/react-native-gesture-handler.ts',
     '^react-native-pressable-scale$': '<rootDir>/__mocks__/react-native-pressable-scale.ts',
+    '^react-native-svg$': '<rootDir>/__mocks__/react-native-svg.ts',
   },
 };
