@@ -1,30 +1,28 @@
 import type { StateCreator } from 'zustand';
 import type { UserPreferences } from '../../types';
+import { DEFAULT_PREFERENCES } from '../../storage/preferences';
 
-export const DEFAULT_PREFERENCES: UserPreferences = {
-  selectedRegions: ['Hungary', 'Ukraine', 'Russia', 'United States', 'United Kingdom'],
-  headlineCount: 5,
-  regionHeadlineCounts: {},
-  historyDays: 7,
-  notifyTime: '07:30',
-  openLinksIn: 'in-app',
-  regionStyle: 'flag',
-  baseCurrency: 'USD',
-  showCurrencyRates: false,
-  showGlobalHeadlines: true,
-  globalHeadlineCount: 5,
-  theme: 'light',
-  aesthetic: 'editorial',
-  updatedAt: new Date(0).toISOString(),
-};
+export type { UserPreferences };
+export { DEFAULT_PREFERENCES };
 
 export interface PrefsSlice {
   prefs: UserPreferences;
-  /** Settings-flow will call this after loading from MMKV/Supabase. */
+  /** Counts user-initiated setPref calls. Incremented by setPref, NOT by setPrefs.
+   *  usePreferences watches this to debounce flush without reacting to hydration writes. */
+  prefsMutationCount: number;
+  /** Replace the full prefs object (hydration / remote sync). Does not dirty-mark. */
   setPrefs: (prefs: UserPreferences) => void;
+  /** Update a single preference key, bump updatedAt, increment prefsMutationCount. */
+  setPref: <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => void;
 }
 
 export const createPrefsSlice: StateCreator<PrefsSlice> = (set) => ({
   prefs: DEFAULT_PREFERENCES,
+  prefsMutationCount: 0,
   setPrefs: (prefs) => set({ prefs }),
+  setPref: (key, value) =>
+    set((s) => ({
+      prefs: { ...s.prefs, [key]: value, updatedAt: new Date().toISOString() },
+      prefsMutationCount: s.prefsMutationCount + 1,
+    })),
 });
