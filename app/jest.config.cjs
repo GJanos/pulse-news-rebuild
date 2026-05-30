@@ -24,5 +24,6 @@ module.exports = {
     '^react-native-gesture-handler$': '<rootDir>/__mocks__/react-native-gesture-handler.ts',
     '^react-native-pressable-scale$': '<rootDir>/__mocks__/react-native-pressable-scale.ts',
     '^react-native-svg$': '<rootDir>/__mocks__/react-native-svg.ts',
+    '^react-native-safe-area-context$': '<rootDir>/__mocks__/react-native-safe-area-context.ts',
   },
 };

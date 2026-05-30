@@ -3,7 +3,74 @@ export const Linking = {
   addEventListener: jest.fn(() => ({
     remove: jest.fn(),
   })),
+  openSettings: jest.fn().mockResolvedValue(undefined),
+  openURL: jest.fn().mockResolvedValue(undefined),
 };
+
+export const Alert = {
+  alert: jest.fn(),
+};
+
+// Minimal Animated mock
+const animatedValue = () => {
+  const val: any = {
+    _value: 0,
+    setValue: jest.fn(),
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    interpolate: jest.fn(() => val),
+  };
+  return val;
+};
+
+const timingMock = jest.fn(() => ({
+  start: jest.fn((cb?: (result: { finished: boolean }) => void) => cb?.({ finished: true })),
+}));
+const springMock = jest.fn(() => ({
+  start: jest.fn((cb?: (result: { finished: boolean }) => void) => cb?.({ finished: true })),
+}));
+
+export const Animated = {
+  Value: jest.fn().mockImplementation(animatedValue),
+  timing: timingMock,
+  spring: springMock,
+  sequence: jest.fn(() => ({ start: jest.fn() })),
+  parallel: jest.fn(() => ({ start: jest.fn() })),
+  View: 'Animated.View',
+  Text: 'Animated.Text',
+  ScrollView: 'Animated.ScrollView',
+  createAnimatedComponent: jest.fn((comp: any) => comp),
+  event: jest.fn(),
+};
+
+export const Easing = {
+  out: jest.fn((fn: any) => fn),
+  in: jest.fn((fn: any) => fn),
+  cubic: jest.fn((t: number) => t),
+  linear: jest.fn((t: number) => t),
+  ease: jest.fn((t: number) => t),
+  bezier: jest.fn(() => jest.fn((t: number) => t)),
+};
+
+export const PanResponder = {
+  create: jest.fn(() => ({
+    panHandlers: {
+      onStartShouldSetResponder: jest.fn(),
+      onMoveShouldSetResponder: jest.fn(),
+      onResponderGrant: jest.fn(),
+      onResponderMove: jest.fn(),
+      onResponderRelease: jest.fn(),
+      onResponderTerminate: jest.fn(),
+      onResponderTerminationRequest: jest.fn(),
+    },
+  })),
+};
+
+export const Switch = 'Switch';
+export const Modal = 'Modal';
+export const TextInput = 'TextInput';
+export const Image = 'Image';
+export const SafeAreaView = 'SafeAreaView';
 
 export const AppState = {
   addEventListener: jest.fn(() => ({
