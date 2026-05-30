@@ -152,16 +152,21 @@ Currency rate fetching happens in the UI, not in cron — no `cron/currency` sli
 
 ### Frontend slices (after backend lands on develop)
 
-| #   | Slice                                                                                                     | Status  |
-| --- | --------------------------------------------------------------------------------------------------------- | ------- |
-| 1   | **app/foundation** — App.tsx shell, Zustand store skeleton, boot state machine, fonts, themes, safe areas | pending |
-| 2   | **app/auth-flow** — Supabase auth + login/signup/reset screens + session hook                             | pending |
-| 3   | **app/digest-flow** — digest fetching + currency rates + DigestPage + DigestPager + sections              | pending |
-| 4   | **app/settings-flow** — Settings screen + region picker + preference editing                              | pending |
-| 5   | **app/article** — ArticleScreen + WebBrowser handoff                                                      | pending |
-| 6   | **app/notifications** — notification registration + deep link parsing + password recovery flow            | pending |
+| #   | Slice                                                                                                     | Status              | PR  |
+| --- | --------------------------------------------------------------------------------------------------------- | ------------------- | --- |
+| 1   | **app/foundation** — App.tsx shell, Zustand store skeleton, boot state machine, fonts, themes, safe areas | ✓ merged to develop | #8  |
+| 2   | **app/auth-flow** — Supabase auth + login/signup/reset screens + session hook                             | ✓ merged to develop | #9  |
+| 3   | **app/digest-flow** — digest fetching + currency rates + DigestPage + DigestPager + sections              | ✓ merged to develop | #10 |
+| 4   | **app/settings-flow** — Settings screen + region picker + preference editing                              | pending             |     |
+| 5   | **app/article** — ArticleScreen + WebBrowser handoff                                                      | pending             |     |
+| 6   | **app/notifications** — notification registration + deep link parsing + password recovery flow            | pending             |     |
 
 Some files (App.tsx, the store) get touched across multiple slices. That is expected. Each slice adds the parts of those files it needs; it does not rewrite from scratch.
+
+### Cross-slice dependency notes
+
+**Slice 4 → Slice 6: `notificationsEnabled`**
+`SettingsScreen` shows a "Notifications disabled — tap to open system settings" banner controlled by `notificationsEnabled`. The real value comes from `useDeviceRegistration` which is slice 6. Slice 4 must add a stub `device` Zustand slice with `notificationsEnabled: false` so the banner is visible and testable from day one. Slice 6 replaces the stub with real FCM registration and updates the slice to the live value. **Do not hardcode `true` or hide the banner — the stub approach keeps the wiring honest.**
 
 Each slice kickoff prompt explicitly scopes the legacy regions to port. Example:
 
