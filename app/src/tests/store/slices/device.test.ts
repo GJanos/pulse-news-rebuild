@@ -16,7 +16,7 @@ function makeSlice(): DeviceSlice {
       if (prop === Symbol.toStringTag || prop === 'constructor') {
         return undefined;
       }
-      return (state as any)[prop];
+      return (state as unknown as Record<string, unknown>)[prop as string];
     },
   });
   return slice;
