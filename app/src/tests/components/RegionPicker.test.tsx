@@ -59,27 +59,27 @@ describe('RegionPicker — toggle', () => {
 
 describe('RegionPicker — reorder mode', () => {
   it('move up is a no-op for the first selected region', () => {
-    const setPref = spySetPref();
+    const mock = spySetPref();
     const { getByText, getByLabelText } = renderPicker();
     fireEvent.press(getByText('Reorder'));
     const moveUpBtn = getByLabelText('Move Hungary up');
     fireEvent.press(moveUpBtn);
-    // Hungary is index 0, can't go higher — no setPref call for selectedRegions
-    const firstCall = (setPref as jest.Mock).mock.calls.find((c) => c[0] === 'selectedRegions');
-    if (firstCall) {
-      expect(firstCall[1][0]).toBe('Hungary');
-    }
+    // Hungary is index 0, can't go higher — selectedRegions should not be called
+    const call = mock.mock.calls.find((c) => c[0] === 'selectedRegions');
+    expect(call).toBeUndefined();
   });
 
   it('All button selects all regions', () => {
-    const setPref = spySetPref();
+    const { REGIONS: ALL_REGIONS } = jest.requireActual('../../data') as {
+      REGIONS: { region: string }[];
+    };
+    const mock = spySetPref();
     const { getByText } = renderPicker();
     fireEvent.press(getByText('Reorder'));
     fireEvent.press(getByText('All'));
-    const call = (setPref as jest.Mock).mock.calls.find((c) => c[0] === 'selectedRegions');
+    const call = mock.mock.calls.find((c) => c[0] === 'selectedRegions');
     expect(call).toBeTruthy();
-    // All regions selected
-    expect((call![1] as string[]).length).toBeGreaterThan(5);
+    expect((call![1] as string[]).length).toBe(ALL_REGIONS.length);
   });
 
   it('None button when all selected deselects all', () => {
@@ -99,19 +99,22 @@ describe('RegionPicker — reorder mode', () => {
 
 describe('RegionPicker — tune mode', () => {
   it('per-region count change calls setPref with merged regionHeadlineCounts', () => {
-    const setPref = spySetPref();
+    expect.assertions(1);
+    const mock = spySetPref();
     const { getByText, getAllByRole } = renderPicker();
     fireEvent.press(getByText('Tune'));
-    // Find increment button for the first selected region (Hungary row)
-    // In tune mode, steppers appear for each selected region
     const buttons = getAllByRole('button');
-    // Press increment on first region stepper (index depends on layout)
-    const incrementBtn = buttons.find(
-      (b) =>
-        b.props.accessibilityLabel?.includes('plus') || b.props.children?.props?.name === 'plus',
-    );
-    if (incrementBtn) fireEvent.press(incrementBtn);
-    const call = (setPref as jest.Mock).mock.calls.find((c) => c[0] === 'regionHeadlineCounts');
-    if (call) expect(typeof call[1]).toBe('object');
+    // The first non-headline-stepper increment button belongs to Hungary row
+    // Pressing any increment button should call setPref('regionHeadlineCounts', ...)
+    // Try pressing each button until we find one that triggers regionHeadlineCounts
+    for (const btn of buttons) {
+      fireEvent.press(btn);
+      const call = mock.mock.calls.find((c) => c[0] === 'regionHeadlineCounts');
+      if (call) {
+        expect(typeof call[1]).toBe('object');
+        return;
+      }
+      mock.mock.calls.length = 0; // reset for next attempt
+    }
   });
 });

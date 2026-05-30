@@ -92,6 +92,7 @@ export default function RegionPicker(): React.ReactElement {
   const jumpRegion = (name: string, dir: 'up' | 'down'): void => {
     if (!selected.has(name)) return;
     const idx = orderedRegions.findIndex((r) => r.region === name);
+    if (idx === -1) return;
     if (dir === 'up' ? idx === 0 : idx === selected.size - 1) return;
     const next = [...orderedRegions];
     const [item] = next.splice(idx, 1);
