@@ -139,6 +139,32 @@ describe('hydration', () => {
   });
 });
 
+// ── userId change ────────────────────────────────────────────────────
+
+describe('userId change', () => {
+  it('flushes dirty prefs to MMKV before re-hydrating on login', async () => {
+    renderHook(() => usePreferences());
+    await waitFor(() => expect(useAppStore.getState().appState).toBe('ready'));
+
+    // User makes a pref change — debounce has not fired yet
+    act(() => {
+      useAppStore.getState().setPref('theme', 'dark');
+    });
+    expect(mockSave).not.toHaveBeenCalled();
+
+    // Login changes userId before the 900ms debounce fires
+    act(() => {
+      useAppStore.setState({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        session: { user: { id: 'user-login', email: 'login@test.com' } } as any,
+      });
+    });
+
+    // flush() must have been called synchronously when userId changed
+    expect(mockSave).toHaveBeenCalledTimes(1);
+  });
+});
+
 // ── Dirty flush (debounced) ──────────────────────────────────────────
 
 describe('dirty flush', () => {

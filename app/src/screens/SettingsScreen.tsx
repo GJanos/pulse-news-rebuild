@@ -9,6 +9,7 @@ import Stepper from '../components/Stepper';
 import PulseIcon from '../components/Icon';
 import { useSlideIn } from '../hooks/useSlideIn';
 import { useSwipe } from '../hooks/useSwipe';
+import { config } from '../config';
 import type { ThemeId, AestheticId } from '../types';
 
 // ---------------------------------------------------------------------------
@@ -361,7 +362,7 @@ export default function SettingsScreen({ onLogout, onDeleteAccount }: Props): Re
                 aes={aes}
                 value={prefs.headlineCount}
                 min={1}
-                max={10}
+                max={config.fetchCount}
                 onChange={(n) => setPref('headlineCount', n)}
               />
             }
@@ -390,7 +391,7 @@ export default function SettingsScreen({ onLogout, onDeleteAccount }: Props): Re
                   aes={aes}
                   value={prefs.globalHeadlineCount}
                   min={1}
-                  max={10}
+                  max={config.fetchCount}
                   onChange={(n) => setPref('globalHeadlineCount', n)}
                 />
               }

@@ -55,6 +55,16 @@ describe('RegionPicker — toggle', () => {
     const call = (setPref as jest.Mock).mock.calls[0];
     expect(call[1]).not.toContain('Hungary');
   });
+
+  it('cannot deselect the only remaining selected region', () => {
+    useAppStore.setState({
+      prefs: { ...DEFAULT_PREFERENCES, selectedRegions: ['Hungary'] },
+    });
+    const setPref = spySetPref();
+    const { getByLabelText } = renderPicker();
+    fireEvent.press(getByLabelText('Hungary, selected'));
+    expect(setPref).not.toHaveBeenCalled();
+  });
 });
 
 describe('RegionPicker — reorder mode', () => {
@@ -82,8 +92,7 @@ describe('RegionPicker — reorder mode', () => {
     expect((call![1] as string[]).length).toBe(ALL_REGIONS.length);
   });
 
-  it('None button when all selected deselects all', () => {
-    // Set all regions as selected first
+  it('All pill is a no-op when all regions are already selected', () => {
     const { REGIONS } = jest.requireActual('../../data') as { REGIONS: { region: string }[] };
     useAppStore.setState({
       prefs: { ...DEFAULT_PREFERENCES, selectedRegions: REGIONS.map((r) => r.region) },
@@ -91,9 +100,9 @@ describe('RegionPicker — reorder mode', () => {
     const setPref = spySetPref();
     const { getByText } = renderPicker();
     fireEvent.press(getByText('Reorder'));
-    fireEvent.press(getByText('None'));
+    fireEvent.press(getByText('All'));
     const call = (setPref as jest.Mock).mock.calls.find((c) => c[0] === 'selectedRegions');
-    expect((call![1] as string[]).length).toBe(0);
+    expect(call).toBeUndefined(); // no-op — cannot deselect all
   });
 });
 
