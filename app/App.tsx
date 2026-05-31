@@ -4,7 +4,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import * as WebBrowser from 'expo-web-browser';
 import { useFonts } from 'expo-font';
 import {
   SourceSerif4_400Regular,
@@ -37,6 +36,7 @@ import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import DigestPager from './src/components/DigestPager';
 import SettingsScreen from './src/screens/SettingsScreen';
 import ArticleScreen from './src/screens/ArticleScreen';
+import { openExternalUrl } from './src/utils/openExternalUrl';
 import UpdateRequiredScreen from './src/screens/stubs/UpdateRequiredScreen';
 import MaintenanceScreen from './src/screens/stubs/MaintenanceScreen';
 import type { AppState, ScreenId, Headline, Region } from './src/types';
@@ -126,7 +126,7 @@ export function RootScreens({
   const onOpenArticle = useCallback(
     (h: Headline, r: Region) => {
       if (openLinksIn === 'browser') {
-        void WebBrowser.openBrowserAsync(h.url, { showInRecents: false });
+        openExternalUrl(h.url, { showInRecents: false });
       } else {
         setArticle({ h, r });
       }

@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,6 +9,7 @@ import PulseIcon from '../components/Icon';
 import Flag from '../components/Flag';
 import { useSwipe } from '../hooks/useSwipe';
 import { useSlideIn } from '../hooks/useSlideIn';
+import { openExternalUrl } from '../utils/openExternalUrl';
 import type { Headline, Region } from '../types';
 
 interface Props {
@@ -38,7 +38,7 @@ export default function ArticleScreen({
   );
 
   const openArticle = (): void => {
-    void WebBrowser.openBrowserAsync(headline.url);
+    openExternalUrl(headline.url);
   };
 
   const panHandlers = useSwipe(openArticle, dismiss);
