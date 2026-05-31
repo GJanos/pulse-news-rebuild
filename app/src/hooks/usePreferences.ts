@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { useAppStore } from '../store';
+import { config } from '../config';
 import {
   DEFAULT_PREFERENCES,
   loadLocalPreferences,
@@ -17,18 +18,25 @@ const log = getLogger('usePreferences');
 export function usePreferences(): void {
   const setPrefs = useAppStore((s) => s.setPrefs);
   const setAppState = useAppStore((s) => s.setAppState);
-  const prefs = useAppStore((s) => s.prefs);
   const screen = useAppStore((s) => s.screen);
   const userId = useAppStore((s) => s.session?.user.id ?? null);
   const mutationCount = useAppStore((s) => s.prefsMutationCount);
 
   const dirtyRef = useRef(false);
-  const prefsRef = useRef(prefs);
-  prefsRef.current = prefs;
+  // Kept in sync via store subscription below — no React selector so App doesn't re-render on pref changes.
+  const prefsRef = useRef(useAppStore.getState().prefs);
   const userIdRef = useRef(userId);
   userIdRef.current = userId;
   const flushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevScreenRef = useRef(screen);
+
+  // Sync prefsRef with the store without subscribing via React selector (avoids re-renders in App).
+  useEffect(() => {
+    prefsRef.current = useAppStore.getState().prefs;
+    return useAppStore.subscribe((s) => {
+      prefsRef.current = s.prefs;
+    });
+  }, []);
 
   const flush = useCallback((): void => {
     if (!dirtyRef.current) return;
@@ -46,6 +54,8 @@ export function usePreferences(): void {
 
   // Hydration + background Supabase sync
   useEffect(() => {
+    // Flush any pending dirty write first so in-flight edits survive login/logout transitions.
+    if (dirtyRef.current) flush();
     let cancelled = false;
     log.info('hydrating preferences');
 
@@ -69,7 +79,7 @@ export function usePreferences(): void {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, flush]);
 
   // Dirty tracking + debounced flush — only reacts to user setPref calls,
   // not to setPrefs (hydration/sync), because mutationCount is only incremented by setPref.
@@ -80,7 +90,7 @@ export function usePreferences(): void {
     flushTimer.current = setTimeout(() => {
       flush();
       flushTimer.current = null;
-    }, 900);
+    }, config.prefsDebounceMs);
     return () => {
       if (flushTimer.current) {
         clearTimeout(flushTimer.current);

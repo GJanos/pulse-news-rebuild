@@ -66,8 +66,12 @@ export default function RegionPicker(): React.ReactElement {
 
   const toggleRegion = (name: string): void => {
     const next = new Set(selected);
-    if (next.has(name)) next.delete(name);
-    else next.add(name);
+    if (next.has(name)) {
+      if (next.size === 1) return; // must keep at least one region selected
+      next.delete(name);
+    } else {
+      next.add(name);
+    }
     const nextOrder = [
       ...orderedRegions.filter((r) => next.has(r.region)),
       ...orderedRegions.filter((r) => !next.has(r.region)),
@@ -106,12 +110,13 @@ export default function RegionPicker(): React.ReactElement {
   const leftPill =
     mode === 'reorder'
       ? {
-          label: allSelected ? 'None' : 'All',
+          label: 'All',
           onPress: () => {
+            if (allSelected) return;
             LayoutAnimation.configureNext(LAYOUT_ANIM);
-            commit(allSelected ? new Set() : new Set(REGIONS.map((r) => r.region)));
+            commit(new Set(REGIONS.map((r) => r.region)));
           },
-          active: false,
+          active: allSelected,
         }
       : mode === 'tune'
         ? { label: 'Done', onPress: () => setMode('normal'), active: true }

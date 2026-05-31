@@ -12,8 +12,16 @@ export const Alert = {
 };
 
 // Minimal Animated mock
-const animatedValue = () => {
-  const val: any = {
+interface AnimatedValue {
+  _value: number;
+  setValue: jest.Mock;
+  addListener: jest.Mock;
+  removeListener: jest.Mock;
+  interpolate: jest.Mock;
+}
+
+const animatedValue = (): AnimatedValue => {
+  const val: AnimatedValue = {
     _value: 0,
     setValue: jest.fn(),
     addListener: jest.fn(),
@@ -39,13 +47,13 @@ export const Animated = {
   View: 'Animated.View',
   Text: 'Animated.Text',
   ScrollView: 'Animated.ScrollView',
-  createAnimatedComponent: jest.fn((comp: any) => comp),
+  createAnimatedComponent: jest.fn((comp: unknown) => comp),
   event: jest.fn(),
 };
 
 export const Easing = {
-  out: jest.fn((fn: any) => fn),
-  in: jest.fn((fn: any) => fn),
+  out: jest.fn((fn: (t: number) => number) => fn),
+  in: jest.fn((fn: (t: number) => number) => fn),
   cubic: jest.fn((t: number) => t),
   linear: jest.fn((t: number) => t),
   ease: jest.fn((t: number) => t),
