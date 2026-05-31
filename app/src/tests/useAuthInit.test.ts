@@ -28,4 +28,20 @@ describe('handleAuthReady', () => {
     handleAuthReady(true);
     expect(useAppStore.getState().appState).toBe('prefs-loading');
   });
+
+  it('does not regress to prefs-loading when prefs already hydrated to ready', () => {
+    // Boot race: usePreferences reaches 'ready' before getSession resolves authReady.
+    useAppStore.setState({
+      session: { user: { email: 'a@b.com' } } as unknown as Session,
+      appState: 'ready',
+    });
+    handleAuthReady(true);
+    expect(useAppStore.getState().appState).toBe('ready');
+  });
+
+  it('still forces unauthenticated even if appState was optimistically ready', () => {
+    useAppStore.setState({ session: null, appState: 'ready' });
+    handleAuthReady(true);
+    expect(useAppStore.getState().appState).toBe('unauthenticated');
+  });
 });

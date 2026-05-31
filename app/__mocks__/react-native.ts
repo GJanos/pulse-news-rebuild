@@ -86,6 +86,13 @@ export const AppState = {
   })),
 };
 
+export const BackHandler = {
+  addEventListener: jest.fn(() => ({
+    remove: jest.fn(),
+  })),
+  removeEventListener: jest.fn(),
+};
+
 // Minimal host-component stubs for component tests
 export const View = 'View';
 export const Text = 'Text';

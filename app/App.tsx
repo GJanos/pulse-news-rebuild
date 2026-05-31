@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { View, StyleSheet, BackHandler } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -35,9 +35,11 @@ import LoginScreen from './src/screens/LoginScreen';
 import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import DigestPager from './src/components/DigestPager';
 import SettingsScreen from './src/screens/SettingsScreen';
+import ArticleScreen from './src/screens/ArticleScreen';
+import { openExternalUrl } from './src/utils/openExternalUrl';
 import UpdateRequiredScreen from './src/screens/stubs/UpdateRequiredScreen';
 import MaintenanceScreen from './src/screens/stubs/MaintenanceScreen';
-import type { AppState, ScreenId } from './src/types';
+import type { AppState, ScreenId, Headline, Region } from './src/types';
 import type { Theme } from './src/themes';
 import type { AuthActions } from './src/hooks/useSupabaseAuth';
 import type { DigestPageHandle } from './src/components/DigestPage';
@@ -106,7 +108,7 @@ interface RootScreensProps {
   actions: AuthActions;
 }
 
-function RootScreens({
+export function RootScreens({
   appState,
   screen,
   theme,
@@ -118,7 +120,19 @@ function RootScreens({
   const article = useAppStore((s) => s.article);
   const setArticle = useAppStore((s) => s.setArticle);
   const setScreen = useAppStore((s) => s.setScreen);
+  const openLinksIn = useAppStore((s) => s.prefs.openLinksIn);
   const activePageRef = useRef<DigestPageHandle | null>(null);
+
+  const onOpenArticle = useCallback(
+    (h: Headline, r: Region) => {
+      if (openLinksIn === 'browser') {
+        openExternalUrl(h.url, { showInRecents: false });
+      } else {
+        setArticle({ h, r });
+      }
+    },
+    [openLinksIn, setArticle],
+  );
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -177,7 +191,7 @@ function RootScreens({
           dayIndex={dayIndex}
           setDayIndex={setDayIndex}
           onOpenSettings={() => setScreen('settings')}
-          onOpenArticle={(h, r) => setArticle({ h, r })}
+          onOpenArticle={onOpenArticle}
           activePageRef={activePageRef}
         />
       )}
@@ -188,6 +202,9 @@ function RootScreens({
           }}
           onDeleteAccount={actions.deleteAccount}
         />
+      )}
+      {article && (
+        <ArticleScreen headline={article.h} region={article.r} onClose={() => setArticle(null)} />
       )}
     </SafeAreaView>
   );
