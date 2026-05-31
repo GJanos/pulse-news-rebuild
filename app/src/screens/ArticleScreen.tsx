@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Clipboard from 'expo-clipboard';
@@ -27,7 +27,15 @@ export default function ArticleScreen({
   const aes = useAppStore((s) => AESTHETICS[s.prefs.aesthetic]);
   const insets = useSafeAreaInsets();
   const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { slideAnim, dismiss } = useSlideIn(onClose);
+
+  useEffect(
+    () => () => {
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+    },
+    [],
+  );
 
   const openArticle = (): void => {
     void WebBrowser.openBrowserAsync(headline.url);
@@ -46,7 +54,8 @@ export default function ArticleScreen({
   const copyLink = (): void => {
     void Clipboard.setStringAsync(headline.url).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setCopied(false), 1500);
     });
   };
 
