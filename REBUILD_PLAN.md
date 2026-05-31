@@ -157,7 +157,7 @@ Currency rate fetching happens in the UI, not in cron — no `cron/currency` sli
 | 1   | **app/foundation** — App.tsx shell, Zustand store skeleton, boot state machine, fonts, themes, safe areas | ✓ merged to develop | #8  |
 | 2   | **app/auth-flow** — Supabase auth + login/signup/reset screens + session hook                             | ✓ merged to develop | #9  |
 | 3   | **app/digest-flow** — digest fetching + currency rates + DigestPage + DigestPager + sections              | ✓ merged to develop | #10 |
-| 4   | **app/settings-flow** — Settings screen + region picker + preference editing                              | pending             |     |
+| 4   | **app/settings-flow** — Settings screen + region picker + preference editing                              | ✓ merged to develop | #12 |
 | 5   | **app/article** — ArticleScreen + WebBrowser handoff                                                      | pending             |     |
 | 6   | **app/notifications** — notification registration + deep link parsing + password recovery flow            | pending             |     |
 
